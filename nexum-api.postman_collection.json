@@ -1,0 +1,254 @@
+{
+  "info": {
+    "name": "Nexum API — Sprint 1",
+    "_postman_id": "nexum-api-sprint1",
+    "description": "Colección completa de endpoints del backend Nexum. Usá la variable {{base_url}} = http://127.0.0.1:8000. Tras hacer login, copiá el token en la variable {{token}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Registro, verificación de email, login, logout y recuperación de contraseña.",
+      "item": [
+        {
+          "name": "Registro",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/auth/register", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Pérez\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"Password123!\",\n  \"password_confirmation\": \"Password123!\"\n}"
+            },
+            "description": "Crea un nuevo usuario con rol 'professional' y envía un email de verificación en cola. Devuelve 201 con los datos básicos del usuario (sin token — debe verificar email primero)."
+          }
+        },
+        {
+          "name": "Verificar Email",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/email/verify/:id/:hash?expires=:expires&signature=:signature",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "email", "verify", ":id", ":hash"],
+              "variable": [
+                { "key": "id", "value": "1", "description": "ID del usuario" },
+                { "key": "hash", "value": "abc123", "description": "Hash SHA1 del email" }
+              ],
+              "query": [
+                { "key": "expires", "value": "1234567890" },
+                { "key": "signature", "value": "firma_generada_por_laravel" }
+              ]
+            },
+            "description": "Verifica el email del usuario usando el link firmado recibido por correo. URL completa se obtiene del email de verificación. Devuelve 200 con mensaje de éxito."
+          }
+        },
+        {
+          "name": "Reenviar Verificación",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/auth/email/resend", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "email", "resend"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan.perez@example.com\"\n}"
+            },
+            "description": "Reenvía el email de verificación. Throttle: 6 intentos/minuto. Siempre devuelve 200 (no expone si el email existe o ya está verificado)."
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@portfolio.test\",\n  \"password\": \"Admin1234!\"\n}"
+            },
+            "description": "Autentica al usuario y devuelve un token Sanctum. Requiere email verificado e is_active=true. Throttle: 5 intentos/minuto por IP. En caso de cuenta desactivada devuelve 403 con mensaje diferenciado según si fue el admin o el propio usuario."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/auth/logout", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "logout"] },
+            "body": { "mode": "none" },
+            "description": "Revoca el token actual del usuario autenticado. Requiere Authorization: Bearer {{token}}."
+          }
+        },
+        {
+          "name": "Olvidé mi Contraseña",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/auth/forgot-password", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "forgot-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan.perez@example.com\"\n}"
+            },
+            "description": "Envía un email en cola con el link de reset de contraseña apuntando al frontend ({FRONTEND_URL}/reset-password?token=...&email=...). Siempre devuelve 200 para no exponer si el email existe."
+          }
+        },
+        {
+          "name": "Resetear Contraseña",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/auth/reset-password", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "reset-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"token_del_email_de_reset\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"NuevaPassword123!\",\n  \"password_confirmation\": \"NuevaPassword123!\"\n}"
+            },
+            "description": "Cambia la contraseña usando el token recibido por email. Al completarse, revoca todos los tokens Sanctum activos del usuario. Devuelve 400 si el token es inválido o expiró."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "description": "Gestión del perfil del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}} excepto /reactivate.",
+      "item": [
+        {
+          "name": "Ver Perfil",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/profile", "host": ["{{base_url}}"], "path": ["api", "v1", "profile"] },
+            "description": "Devuelve el perfil del usuario autenticado con sus datos y el usuario relacionado. 404 si aún no tiene perfil creado."
+          }
+        },
+        {
+          "name": "Crear / Actualizar Perfil",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/profile", "host": ["{{base_url}}"], "path": ["api", "v1", "profile"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profession\": \"Full Stack Developer\",\n  \"bio\": \"Desarrollador con experiencia en Laravel y Vue.js.\",\n  \"linkedin_url\": \"https://www.linkedin.com/in/mi-perfil\",\n  \"github_url\": \"https://github.com/mi-usuario\"\n}"
+            },
+            "description": "Crea el perfil si no existe, o lo actualiza (updateOrCreate). Aplica strip_tags() sobre todos los campos de texto. linkedin_url debe contener 'linkedin.com', github_url debe contener 'github.com'. bio máximo 1000 caracteres."
+          }
+        },
+        {
+          "name": "Desactivar Cuenta (propio usuario)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/profile/deactivate", "host": ["{{base_url}}"], "path": ["api", "v1", "profile", "deactivate"] },
+            "body": { "mode": "none" },
+            "description": "El usuario desactiva su propia cuenta (is_active=false, deactivated_by_admin=false). El portfolio queda con global_privacy='private'. Revoca todos los tokens activos."
+          }
+        },
+        {
+          "name": "Reactivar Cuenta (propio usuario)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/profile/reactivate", "host": ["{{base_url}}"], "path": ["api", "v1", "profile", "reactivate"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "description": "Reactiva la cuenta del usuario sin requerir autenticación (solo email + password válidos). Solo funciona si deactivated_by_admin=false. Restaura global_privacy='public' del portfolio. Devuelve 403 si fue desactivada por el admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Endpoints exclusivos para usuarios con rol 'admin'. Todos requieren Authorization: Bearer {{token}} con token de un admin.",
+      "item": [
+        {
+          "name": "Toggle Estado de Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/users/:user_id/toggle-status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "users", ":user_id", "toggle-status"],
+              "variable": [
+                { "key": "user_id", "value": "2", "description": "ID del usuario a activar/desactivar" }
+              ]
+            },
+            "body": { "mode": "none" },
+            "description": "Activa o desactiva un usuario. Si se desactiva: is_active=false, deactivated_by_admin=true, revoca todos sus tokens. Si se reactiva: is_active=true, deactivated_by_admin=false. No puede usarse sobre la propia cuenta del admin (devuelve 422)."
+          }
+        },
+        {
+          "name": "Activity Log",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/activity-log?user_id=2&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "activity-log"],
+              "query": [
+                { "key": "user_id", "value": "2", "description": "Filtrar por ID de usuario (opcional)" },
+                { "key": "per_page", "value": "20", "description": "Registros por página, máx 100 (opcional, default 20)" }
+              ]
+            },
+            "description": "Devuelve el log de actividad paginado. Registra eventos created y updated de los modelos User y Portfolio. Campos auditados — User: first_name, last_name, email, is_active, deactivated_by_admin. Profile: profession, bio, linkedin_url, github_url."
+          }
+        }
+      ]
+    }
+  ]
+}
