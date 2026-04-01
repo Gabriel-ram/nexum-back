@@ -27,9 +27,17 @@ class ProfileController extends Controller
 
     public function update(ProfileRequest $request): ProfileResource
     {
+        $validated = $request->validated();
+
+        $userFields = collect($validated)->only(['first_name', 'last_name'])->all();
+        if (! empty($userFields)) {
+            $request->user()->update($userFields);
+        }
+
+        $profileFields = collect($validated)->except(['first_name', 'last_name'])->all();
         $profile = Profile::updateOrCreate(
             ['user_id' => $request->user()->id],
-            $request->validated()
+            $profileFields
         );
 
         return new ProfileResource($profile->load('user'));

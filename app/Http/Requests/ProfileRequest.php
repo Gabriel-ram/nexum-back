@@ -14,6 +14,8 @@ class ProfileRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'first_name'   => $this->first_name   ? strip_tags($this->first_name)   : null,
+            'last_name'    => $this->last_name     ? strip_tags($this->last_name)    : null,
             'profession'   => $this->profession   ? strip_tags($this->profession)   : null,
             'bio'          => $this->bio          ? strip_tags($this->bio)          : null,
             'linkedin_url' => $this->linkedin_url ? strip_tags($this->linkedin_url) : null,
@@ -24,6 +26,8 @@ class ProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'first_name'   => ['sometimes', 'string', 'min:1', 'max:50'],
+            'last_name'    => ['sometimes', 'string', 'min:1', 'max:50'],
             'profession'   => ['nullable', 'string', 'max:255'],
             'bio'          => ['nullable', 'string', 'max:1000'],
             'linkedin_url' => [

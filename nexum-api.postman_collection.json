@@ -168,9 +168,9 @@
             "url": { "raw": "{{base_url}}/api/v1/profile", "host": ["{{base_url}}"], "path": ["api", "v1", "profile"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"profession\": \"Full Stack Developer\",\n  \"bio\": \"Desarrollador con experiencia en Laravel y Vue.js.\",\n  \"linkedin_url\": \"https://www.linkedin.com/in/mi-perfil\",\n  \"github_url\": \"https://github.com/mi-usuario\"\n}"
+              "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"García\",\n  \"profession\": \"Full Stack Developer\",\n  \"bio\": \"Desarrollador con experiencia en Laravel y Vue.js.\",\n  \"linkedin_url\": \"https://www.linkedin.com/in/mi-perfil\",\n  \"github_url\": \"https://github.com/mi-usuario\"\n}"
             },
-            "description": "Crea el perfil si no existe, o lo actualiza (updateOrCreate). Aplica strip_tags() sobre todos los campos de texto. linkedin_url debe contener 'linkedin.com', github_url debe contener 'github.com'. bio máximo 1000 caracteres."
+            "description": "Crea el perfil si no existe, o lo actualiza (updateOrCreate). Todos los campos son opcionales (se puede enviar solo los que se quieren modificar). first_name y last_name actualizan el modelo User. profession, bio, linkedin_url y github_url actualizan el modelo Profile. Aplica strip_tags() sobre todos los campos. linkedin_url debe contener 'linkedin.com', github_url debe contener 'github.com'. bio máximo 1000 caracteres."
           }
         },
         {
