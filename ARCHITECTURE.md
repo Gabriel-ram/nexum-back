@@ -60,37 +60,61 @@ JsonResponse              ← response()->json([...], $statusCode)
 Cliente HTTP
 ```
 
-### Ejemplo visual: `PUT /api/v1/profile`
+### Ejemplo visual: `PUT /api/v1/portfolio`
 
 ```
-PUT /api/v1/profile
+PUT /api/v1/portfolio
   Authorization: Bearer abc123token
-  Body: { "profession": "Dev", "bio": "...", "github_url": "..." }
+  Content-Type: application/json
+  Body: { "profession": "Dev", "biography": "...", "github_url": "..." }
 
 1. routes/api.php
-   └── Route::put('/', [ProfileController::class, 'update'])
+   └── Route::put('/', [PortfolioController::class, 'update'])
        └── middleware: auth:sanctum
 
 2. auth:sanctum middleware
    └── Busca el token "abc123token" en personal_access_tokens
    └── Carga el User correspondiente → disponible en $request->user()
 
-3. ProfileRequest
+3. PortfolioRequest
    └── prepareForValidation() → strip_tags en todos los campos de texto
-   └── rules() → valida bio máx 1000 chars, github_url debe contener "github.com"
+   └── rules() → valida biography máx 2000 chars, github_url debe contener "github.com"
    └── Si falla → 422 Unprocessable Entity con detalle de errores
 
-4. ProfileController::update()
-   └── Profile::updateOrCreate(['user_id' => $request->user()->id], $request->validated())
+4. PortfolioController::update()
+   └── Portfolio::updateOrCreate(['user_id' => $request->user()->id], $request->validated())
    └── Si es nuevo → Spatie Activitylog registra evento "created" en activity_log
    └── Si existe → Spatie Activitylog registra solo los campos que cambiaron ("updated")
 
-5. ProfileResource::toArray()
-   └── Retorna: id, user{id, first_name, last_name, email}, profession, bio,
-               avatar_path, linkedin_url, github_url, created_at, updated_at
+5. PortfolioResource::toArray()
+   └── Retorna: id, user{id, first_name, last_name, email}, profession, biography,
+               phone, location, avatar_url, linkedin_url, github_url,
+               design_pattern, global_privacy, views_count, created_at, updated_at
 
-6. return new ProfileResource($profile)
+6. return new PortfolioResource($portfolio)
    └── HTTP 200 con Content-Type: application/json
+```
+
+### Ejemplo visual: `POST /api/v1/portfolio/avatar`
+
+```
+POST /api/v1/portfolio/avatar
+  Authorization: Bearer abc123token
+  Content-Type: multipart/form-data
+  Body: avatar=[archivo binario]
+
+1. AvatarRequest
+   └── rules() → valida que avatar sea imagen, mimes jpg/jpeg/png/webp, máx 2MB
+
+2. PortfolioController::updateAvatar()
+   └── Si existe avatar anterior → Storage::disk('public')->delete($portfolio->avatar_path)
+   └── $request->file('avatar')->store('avatars', 'public')
+       → guarda en storage/app/public/avatars/{uuid}.jpg
+       → accesible en http://dominio/storage/avatars/{uuid}.jpg
+   └── Portfolio::updateOrCreate(['user_id' => ...], ['avatar_path' => $path])
+
+3. PortfolioResource::toArray()
+   └── avatar_url → Storage::disk('public')->url($avatar_path)  ← URL pública completa
 ```
 
 ---
@@ -102,7 +126,7 @@ PUT /api/v1/profile
 | Archivo | Responsabilidad |
 |---|---|
 | `database/seeders/RoleSeeder.php` | Crea los roles `admin` y `professional` en la tabla `roles` |
-| `database/seeders/AdminUserSeeder.php` | Crea `admin@portfolio.test` y le asigna el rol `admin` |
+| `database/seeders/AdminUserSeeder.php` | Crea `admin@nexun.com` y le asigna el rol `admin` |
 | `app/Http/Middleware/CheckRole.php` | Recibe el rol como parámetro (`role:admin`), consulta Spatie, devuelve 403 si no coincide |
 | `bootstrap/app.php` | Registra el alias `'role' => CheckRole::class` y carga `routes/api.php` |
 | `app/Models/User.php` | Trait `HasRoles` habilita `$user->assignRole()`, `$user->hasRole()`, `$user->getRoleNames()` |
@@ -149,21 +173,18 @@ Laravel construye el link del email buscando esa ruta por nombre. Al nombrar nue
 
 ---
 
-### HU-5 — Desactivación de cuentas (dos escenarios)
+### HU-5 — Desactivación de cuentas (admin)
 
-El campo `deactivated_by_admin` en la tabla `users` es la clave que distingue ambos casos:
+El campo `deactivated_by_admin` en la tabla `users` distingue si la cuenta fue desactivada por un administrador.
 
 | Escenario | `is_active` | `deactivated_by_admin` | Puede reactivarse |
 |---|---|---|---|
 | Admin desactiva | `false` | `true` | Solo el admin vía `toggle-status` |
-| Usuario se autodesactiva | `false` | `false` | El propio usuario vía `/profile/reactivate` |
 | Cuenta activa | `true` | `false` | N/A |
 
 | Archivo | Responsabilidad |
 |---|---|
 | `AdminUserController::toggleStatus()` | Si activo → desactiva y pone `deactivated_by_admin=true`. Si inactivo → reactiva. Siempre revoca tokens al desactivar |
-| `ProfileController::deactivate()` | Pone `is_active=false` (sin tocar `deactivated_by_admin`). Pone portfolio en `private`. Revoca tokens |
-| `ProfileController::reactivate()` | Sin auth. Verifica credenciales + que `deactivated_by_admin=false`. Reactiva y restaura `global_privacy=public` |
 | `AuthController::login()` | Lee `deactivated_by_admin` para elegir el mensaje 403 apropiado |
 
 ---
@@ -175,7 +196,7 @@ El trait `LogsActivity` intercepta automáticamente los eventos Eloquent `create
 | Archivo | Responsabilidad |
 |---|---|
 | `app/Models/User.php` → `getActivitylogOptions()` | Define log name `user`, audita: first_name, last_name, email, is_active, deactivated_by_admin |
-| `app/Models/Portfolio.php` → `getActivitylogOptions()` | Define log name `portfolio`, audita: profession, bio, linkedin_url, github_url |
+| `app/Models/Portfolio.php` → `getActivitylogOptions()` | Define log name `portfolio`, audita: profession, biography, phone, location, global_privacy, design_pattern, linkedin_url, github_url |
 | `ActivityLogController::index()` | Consulta `Activity::with('causer')`, filtra por `user_id` si se proporciona, pagina resultados |
 
 **Qué guarda Spatie en cada registro:**
@@ -199,15 +220,21 @@ El trait `LogsActivity` intercepta automáticamente los eventos Eloquent `create
 
 ---
 
-### HU-7 y HU-8 — Perfil e integración de redes profesionales
+### HU-7 y HU-8 — Portfolio e integración de redes profesionales
 
 | Archivo | Responsabilidad |
 |---|---|
-| `app/Http/Requests/ProfileRequest.php` → `prepareForValidation()` | Aplica `strip_tags()` sobre profession, bio, linkedin_url, github_url antes de validar |
-| `ProfileRequest::rules()` | bio máx 1000 chars; linkedin_url y github_url validan dominio con `parse_url()` + closure |
-| `ProfileController::show()` | Carga `$request->user()->profile` con eager loading del `user`, retorna `ProfileResource` |
-| `ProfileController::update()` | `Profile::updateOrCreate(['user_id' => ...], $validated)` — idempotente, no duplica perfiles |
-| `app/Http/Resources/ProfileResource.php` | Expone: id, user{}, profession, bio, avatar_path, linkedin_url, github_url, timestamps |
+| `app/Http/Requests/PortfolioRequest.php` → `prepareForValidation()` | Aplica `strip_tags()` sobre campos de texto antes de validar |
+| `PortfolioRequest::rules()` | biography máx 2000 chars; linkedin_url y github_url validan dominio con `parse_url()` + closure |
+| `app/Http/Requests/AvatarRequest.php` | Valida que `avatar` sea imagen, formatos jpg/jpeg/png/webp, máx 2MB |
+| `PortfolioController::show()` | Carga `$request->user()->portfolio` con eager loading del `user`, retorna `PortfolioResource` |
+| `PortfolioController::update()` | `Portfolio::updateOrCreate(['user_id' => ...], $validated)` — idempotente, no duplica portfolios. Solo campos de texto vía JSON |
+| `PortfolioController::updateAvatar()` | Elimina la imagen anterior del storage, sube la nueva, actualiza `avatar_path` |
+| `app/Http/Resources/PortfolioResource.php` | Expone todos los campos del portfolio. `avatar_url` retorna la URL pública completa via `Storage::disk('public')->url()` |
+
+**Por qué dos endpoints para portfolio:**
+- `PUT /portfolio` acepta JSON puro → liviano, ideal para editar texto frecuentemente
+- `POST /portfolio/avatar` acepta `multipart/form-data` → necesario para transportar archivos binarios
 
 ---
 
@@ -218,36 +245,38 @@ El trait `LogsActivity` intercepta automáticamente los eventos Eloquent `create
 │                        User                              │
 │  id, first_name, last_name, email, password              │
 │  is_active, deactivated_by_admin, storage_used           │
-└──────────┬────────────────┬────────────────┬────────────┘
-           │ hasOne         │ hasOne         │ (Spatie)
-           ▼                ▼                ▼
-    ┌──────────────┐  ┌──────────────┐  model_has_roles
-    │   Profile    │  │  Portfolio   │       │
-    │  user_id FK  │  │  user_id FK  │       ▼
-    │  profession  │  │  profession  │    ┌──────┐
-    │  bio         │  │  biography   │    │ Role │
-    │  avatar_path │  │  phone       │    │admin │
-    │  linkedin_url│  │  location    │    │prof. │
-    │  github_url  │  │  global_priv │    └──────┘
-    └──────────────┘  │  views_count │
-                      └──────┬───────┘
-                             │ hasMany
-                             ▼
-                      ┌─────────────┐
-                      │ SocialLink  │
-                      │portfolio_id │
-                      │platform_name│
-                      │url          │
-                      └─────────────┘
+└──────────────────────┬──────────────────────────────────┘
+                       │ hasOne                │ (Spatie)
+                       ▼                       ▼
+              ┌─────────────────┐       model_has_roles
+              │    Portfolio    │             │
+              │  user_id FK     │             ▼
+              │  profession     │         ┌──────┐
+              │  biography      │         │ Role │
+              │  phone          │         │admin │
+              │  location       │         │prof. │
+              │  avatar_path    │         └──────┘
+              │  linkedin_url   │
+              │  github_url     │
+              │  design_pattern │
+              │  global_privacy │
+              │  views_count    │
+              └────────┬────────┘
+                       │ hasMany
+                       ▼
+              ┌─────────────────┐
+              │   SocialLink    │
+              │  portfolio_id   │
+              │  platform_name  │
+              │  url            │
+              └─────────────────┘
 ```
 
 ### Notas sobre el diseño
 
-- **User ↔ Profile (1:1):** `Profile` es la identidad pública del profesional en Sprint 1. Tiene `user_id` con índice `unique`, garantizando la relación 1:1 a nivel de base de datos.
+- **User ↔ Portfolio (1:1):** `Portfolio` es el perfil público completo del profesional — foto, bio, links, datos de contacto, configuración de diseño y privacidad. Tiene `user_id` con índice `unique`, garantizando la relación 1:1 a nivel de base de datos.
 
-- **User ↔ Portfolio (1:1):** `Portfolio` es la estructura de presentación completa (diseño, privacidad, vistas). Sus features más avanzadas (design_pattern, global_privacy, views_count) se activan en sprints futuros.
-
-- **Portfolio ↔ SocialLink (1:N):** Un portfolio puede tener múltiples links sociales. En Sprint 1 usamos `linkedin_url` y `github_url` directamente en `Profile` para simplicidad; `SocialLink` está preparada para sprints futuros con plataformas adicionales.
+- **Portfolio ↔ SocialLink (1:N):** Un portfolio puede tener múltiples links sociales. En Sprint 1, `linkedin_url` y `github_url` están directamente en `portfolios` para simplicidad; `SocialLink` está preparada para sprints futuros con plataformas adicionales.
 
 - **User ↔ Role (N:M vía Spatie):** La tabla pivote `model_has_roles` conecta users con roles. Spatie soporta múltiples roles por usuario, pero en este sistema cada usuario tiene exactamente uno: `admin` o `professional`.
 
@@ -255,17 +284,13 @@ El trait `LogsActivity` intercepta automáticamente los eventos Eloquent `create
 
 ```php
 // Desde un User
-$user->profile;           // Profile|null — datos públicos del profesional
-$user->portfolio;         // Portfolio|null — estructura del portfolio
+$user->portfolio;         // Portfolio|null — perfil público del profesional
 $user->getRoleNames();    // Collection ['professional']
 $user->hasRole('admin');  // bool
 
 // Desde un Portfolio
 $portfolio->user;         // User
 $portfolio->socialLinks;  // Collection de SocialLink
-
-// Desde un Profile
-$profile->user;           // User
 ```
 
 ---
@@ -319,7 +344,7 @@ Sanctum implementa autenticación stateless mediante tokens opacos almacenados e
 ┌─────────────────────────────────────────────────────────────────┐
 │  PASO 4 — PETICIÓN AUTENTICADA                                   │
 │                                                                  │
-│  GET /api/v1/profile                                             │
+│  GET /api/v1/portfolio                                           │
 │  Authorization: Bearer 1|abc...xyz                               │
 │                                                                  │
 │  → Middleware auth:sanctum:                                      │
@@ -330,7 +355,7 @@ Sanctum implementa autenticación stateless mediante tokens opacos almacenados e
 │     5. Carga el User con tokenable_id                            │
 │     6. Inyecta el usuario en $request->user()                    │
 │  → Controlador recibe $request->user() ya hidratado              │
-│  ← 200 ProfileResource                                           │
+│  ← 200 PortfolioResource                                         │
 └─────────────────────────────────────────────────────────────────┘
                           │
                           ▼
@@ -383,10 +408,10 @@ model_has_roles
 ───────────────────────────────────────
 role_id | model_type           | model_id
 ────────┼─────────────────────┼─────────
-1       | App\Models\User      | 1        ← admin
-2       | App\Models\User      | 2        ← ana.garcia
-2       | App\Models\User      | 3        ← carlos.mendez
-2       | App\Models\User      | 4        ← sofia.romero
+1       | App\Models\User      | 1        ← admin@nexun.com
+2       | App\Models\User      | 2        ← professional1@nexun.com
+2       | App\Models\User      | 3        ← professional2@nexun.com
+2       | App\Models\User      | 4        ← professional3@nexun.com
 ```
 
 ### Flujo de verificación de rol en una petición
@@ -426,16 +451,16 @@ $user->assignRole('professional');
 
 Spatie usa el concepto de "guard" para separar contextos de autenticación. Por defecto usa el guard `web`. Sanctum autentica por el guard `sanctum` internamente pero cuando consultamos roles usamos el guard `web` porque así están creados los roles en el seeder.
 
-Si en el futuro se necesitan permisos granulares (ej: `edit-own-profile`, `view-analytics`), Spatie permite crearlos con `Permission::create(['name' => '...'])` y asignarlos a roles o directamente a usuarios, sin cambiar la arquitectura existente.
+Si en el futuro se necesitan permisos granulares (ej: `edit-own-portfolio`, `view-analytics`), Spatie permite crearlos con `Permission::create(['name' => '...'])` y asignarlos a roles o directamente a usuarios, sin cambiar la arquitectura existente.
 
 ### Métodos disponibles en el modelo User (via HasRoles)
 
 ```php
-$user->assignRole('professional');          // asigna rol
-$user->syncRoles(['admin']);                // reemplaza todos los roles
-$user->hasRole('admin');                    // bool
+$user->assignRole('professional');            // asigna rol
+$user->syncRoles(['admin']);                  // reemplaza todos los roles
+$user->hasRole('admin');                      // bool
 $user->hasAnyRole(['admin', 'professional']); // bool
-$user->getRoleNames();                      // Collection<string>
+$user->getRoleNames();                        // Collection<string>
 ```
 
 ---

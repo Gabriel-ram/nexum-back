@@ -1,6 +1,6 @@
 # Nexum Backend
 
-API REST para la plataforma de portfolios profesionales **Nexum**. Construida con Laravel 11 y PostgreSQL, expone endpoints de autenticación, gestión de perfiles y administración de usuarios.
+API REST para la plataforma de portfolios profesionales **Nexum**. Construida con Laravel 11 y PostgreSQL, expone endpoints de autenticación, gestión de portfolio y administración de usuarios.
 
 ---
 
@@ -35,6 +35,7 @@ API REST para la plataforma de portfolios profesionales **Nexum**. Construida co
 | Sesiones | `database` |
 | Cola de trabajos | `database` |
 | Caché | `database` |
+| Storage de imágenes | `local` (`storage/app/public`) |
 
 ---
 
@@ -118,7 +119,15 @@ php artisan migrate --seed
 
 Este comando crea todas las tablas y ejecuta los seeders: roles, usuario admin y 3 usuarios profesionales de prueba.
 
-### 7. (Opcional) Publicar configs de paquetes
+### 7. Crear el enlace simbólico del storage
+
+```bash
+php artisan storage:link
+```
+
+Necesario para que las imágenes subidas sean accesibles públicamente vía URL.
+
+### 8. (Opcional) Publicar configs de paquetes
 
 Si necesitás personalizar la configuración de Sanctum o Spatie, los archivos ya están publicados en `/config`:
 
@@ -171,7 +180,7 @@ FRONTEND_URL=http://localhost:5173   # URL del frontend React
                                      # {FRONTEND_URL}/reset-password?token=...&email=...
 
 # ─── Usuario administrador por defecto ─────────────────────────
-ADMIN_PASSWORD=Admin1234!            # contraseña del usuario admin@portfolio.test
+ADMIN_PASSWORD=Admin1234!            # contraseña del usuario admin@nexun.com
 ```
 
 ### Recomendación para desarrollo
@@ -223,7 +232,7 @@ Los endpoints marcados con 👑 requieren además el rol `admin`.
 **Ejemplo — Login / Respuesta:**
 ```json
 // Request
-{ "email": "admin@portfolio.test", "password": "Admin1234!" }
+{ "email": "admin@nexun.com", "password": "Admin1234!" }
 
 // Response 200
 {
@@ -231,8 +240,8 @@ Los endpoints marcados con 👑 requieren además el rol `admin`.
   "user": {
     "id": 1,
     "first_name": "Admin",
-    "last_name": "System",
-    "email": "admin@portfolio.test",
+    "last_name": "Nexun",
+    "email": "admin@nexun.com",
     "role": "admin"
   }
 }
@@ -240,43 +249,58 @@ Los endpoints marcados con 👑 requieren además el rol `admin`.
 
 ---
 
-### Perfil de usuario (`/profile`)
+### Portfolio del usuario (`/portfolio`)
 
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| `GET` | `/profile` | 🔒 | Devuelve el perfil del usuario autenticado. 404 si todavía no tiene perfil. |
-| `PUT` | `/profile` | 🔒 | Crea o actualiza el perfil (idempotente). Sanitiza campos con `strip_tags()`. |
-| `PATCH` | `/profile/deactivate` | 🔒 | El usuario desactiva su propia cuenta. El portfolio pasa a `private`. Revoca todos los tokens. |
-| `PATCH` | `/profile/reactivate` | — | Reactiva la cuenta usando email + password. Solo funciona si no fue desactivada por el admin. |
+| `GET` | `/portfolio` | 🔒 | Devuelve el portfolio del usuario autenticado. 404 si todavía no tiene portfolio. |
+| `PUT` | `/portfolio` | 🔒 | Crea o actualiza el portfolio (idempotente). Solo campos de texto — JSON. Sanitiza con `strip_tags()`. |
+| `POST` | `/portfolio/avatar` | 🔒 | Sube o reemplaza la foto de perfil. `multipart/form-data`. Elimina la imagen anterior automáticamente. |
 
-**Ejemplo — PUT /profile:**
+**Ejemplo — PUT /portfolio (JSON):**
 ```json
 {
+  "first_name": "Juan",
+  "last_name": "García",
   "profession": "Full Stack Developer",
-  "bio": "Desarrollador con experiencia en Laravel y React.",
+  "biography": "Desarrollador con experiencia en Laravel y React.",
+  "phone": "+34 600 000 000",
+  "location": "Madrid, España",
   "linkedin_url": "https://www.linkedin.com/in/mi-perfil",
   "github_url": "https://github.com/mi-usuario"
 }
 ```
 
-**Respuesta — GET /PUT /profile:**
+**Ejemplo — POST /portfolio/avatar (form-data):**
+```
+avatar: [archivo .jpg/.jpeg/.png/.webp, máx 2MB]
+```
+
+> No agregar `Content-Type` manualmente — Postman lo genera automáticamente al usar form-data.
+
+**Respuesta — GET / PUT / POST avatar:**
 ```json
 {
   "data": {
     "id": 1,
     "user": {
       "id": 2,
-      "first_name": "Ana",
+      "first_name": "Juan",
       "last_name": "García",
-      "email": "ana.garcia@portfolio.test"
+      "email": "professional1@nexun.com"
     },
     "profession": "Full Stack Developer",
-    "bio": "Desarrolladora con 5 años de experiencia.",
-    "avatar_path": null,
-    "linkedin_url": "https://www.linkedin.com/in/ana-garcia-dev",
-    "github_url": "https://github.com/anagarcia-dev",
+    "biography": "Desarrollador con experiencia en Laravel y React.",
+    "phone": "+34 600 000 000",
+    "location": "Madrid, España",
+    "avatar_url": "http://localhost:8000/storage/avatars/AbCdEf123.jpg",
+    "linkedin_url": "https://www.linkedin.com/in/mi-perfil",
+    "github_url": "https://github.com/mi-usuario",
+    "design_pattern": null,
+    "global_privacy": "public",
+    "views_count": 0,
     "created_at": "2026-03-30T17:56:46.000000Z",
-    "updated_at": "2026-03-30T17:56:46.000000Z"
+    "updated_at": "2026-04-03T20:11:00.000000Z"
   }
 }
 ```
@@ -305,8 +329,8 @@ Los endpoints marcados con 👑 requieren además el rol `admin`.
       "causer": {
         "id": 1,
         "first_name": "Admin",
-        "last_name": "System",
-        "email": "admin@portfolio.test"
+        "last_name": "Nexun",
+        "email": "admin@nexun.com"
       },
       "properties": {
         "attributes": { "is_active": false },
@@ -344,20 +368,20 @@ Los siguientes usuarios se crean automáticamente al ejecutar los seeders:
 
 | Campo | Valor |
 |---|---|
-| Email | `admin@portfolio.test` |
+| Email | `admin@nexun.com` |
 | Contraseña | Valor de `ADMIN_PASSWORD` en `.env` (default: `Admin1234!`) |
 | Rol | `admin` |
 | Email verificado | Sí |
 
 ### Profesionales
 
-| Nombre | Email | Contraseña | Profesión |
-|---|---|---|---|
-| Ana García | `ana.garcia@portfolio.test` | `Password123!` | Full Stack Developer |
-| Carlos Méndez | `carlos.mendez@portfolio.test` | `Password123!` | UX/UI Designer |
-| Sofía Romero | `sofia.romero@portfolio.test` | `Password123!` | Data Scientist |
+| Email | Contraseña |
+|---|---|
+| `professional1@nexun.com` | `Admin1234!` |
+| `professional2@nexun.com` | `Admin1234!` |
+| `professional3@nexun.com` | `Admin1234!` |
 
-Todos los profesionales tienen email verificado, cuenta activa y perfil completo con bio, linkedin_url y github_url.
+Todos los profesionales tienen email verificado y cuenta activa.
 
 ---
 
@@ -424,6 +448,7 @@ php artisan queue:work
 php artisan route:list                  # lista todas las rutas
 php artisan route:list --path=api/v1    # filtra por prefijo
 php artisan migrate:fresh --seed        # BD limpia con datos de prueba
+php artisan storage:link                # crea el symlink public/storage
 php artisan db:show                     # estado de la BD
 php artisan config:clear                # limpia caché de configuración
 php artisan route:clear                 # limpia caché de rutas
