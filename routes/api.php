@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
-use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\PortfolioController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -41,10 +41,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/activity-log', [ActivityLogController::class, 'index']);
     });
 
-    // HU-7 + HU-8: Perfil del usuario autenticado
-    Route::prefix('profile')->middleware('auth:sanctum')->group(function () {
-        Route::get('/', [ProfileController::class, 'show']);
-        Route::put('/', [ProfileController::class, 'update']);
+    // HU-7 + HU-8: Portfolio del usuario autenticado
+    Route::prefix('portfolio')->middleware('auth:sanctum')->group(function () {
+        Route::get('/', [PortfolioController::class, 'show']);
+        Route::put('/', [PortfolioController::class, 'update']);
+        Route::post('/avatar', [PortfolioController::class, 'updateAvatar']);
     });
 
 });

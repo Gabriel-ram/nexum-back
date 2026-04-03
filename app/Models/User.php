@@ -58,11 +58,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Portfolio::class);
     }
 
-    public function profile(): HasOne
-    {
-        return $this->hasOne(Profile::class);
-    }
-
     public function sendEmailVerificationNotification(): void
     {
         $this->notify(new VerifyEmailQueued);

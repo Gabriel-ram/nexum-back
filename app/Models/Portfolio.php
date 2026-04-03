@@ -17,8 +17,9 @@ class Portfolio extends Model
         'biography',
         'phone',
         'location',
-        'profile_image_path',
-        'banner_image_path',
+        'avatar_path',
+        'linkedin_url',
+        'github_url',
         'design_pattern',
         'global_privacy',
         'views_count',
@@ -28,7 +29,7 @@ class Portfolio extends Model
     {
         return LogOptions::defaults()
             ->useLogName('portfolio')
-            ->logOnly(['profession', 'biography', 'phone', 'location', 'global_privacy', 'design_pattern'])
+            ->logOnly(['profession', 'biography', 'phone', 'location', 'global_privacy', 'design_pattern', 'linkedin_url', 'github_url'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

@@ -4,8 +4,9 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
-class ProfileResource extends JsonResource
+class PortfolioResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -18,10 +19,15 @@ class ProfileResource extends JsonResource
                 'email'      => $this->user->email,
             ],
             'profession'   => $this->profession,
-            'bio'          => $this->bio,
-            'avatar_path'  => $this->avatar_path,
+            'biography'    => $this->biography,
+            'phone'        => $this->phone,
+            'location'     => $this->location,
+            'avatar_url'   => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null,
             'linkedin_url' => $this->linkedin_url,
             'github_url'   => $this->github_url,
+            'design_pattern'  => $this->design_pattern,
+            'global_privacy'  => $this->global_privacy,
+            'views_count'     => $this->views_count,
             'created_at'   => $this->created_at->toISOString(),
             'updated_at'   => $this->updated_at->toISOString(),
         ];
