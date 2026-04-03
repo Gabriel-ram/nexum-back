@@ -41,17 +41,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/activity-log', [ActivityLogController::class, 'index']);
     });
 
-    // HU-5B + HU-7 + HU-8: Perfil del usuario autenticado
-    Route::prefix('profile')->group(function () {
-        // HU-7 + HU-8: Ver y actualizar perfil
-        Route::middleware('auth:sanctum')->group(function () {
-            Route::get('/', [ProfileController::class, 'show']);
-            Route::put('/', [ProfileController::class, 'update']);
-            Route::patch('/deactivate', [ProfileController::class, 'deactivate']);
-        });
-
-        // HU-5B: Reactivación sin autenticación
-        Route::patch('/reactivate', [ProfileController::class, 'reactivate']);
+    // HU-7 + HU-8: Perfil del usuario autenticado
+    Route::prefix('profile')->middleware('auth:sanctum')->group(function () {
+        Route::get('/', [ProfileController::class, 'show']);
+        Route::put('/', [ProfileController::class, 'update']);
     });
 
 });
