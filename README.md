@@ -165,14 +165,15 @@ SESSION_LIFETIME=120
 QUEUE_CONNECTION=database
 CACHE_STORE=database
 
-# ─── Correo electrónico ────────────────────────────────────────
+# ─── Correo electrónico (Gmail SMTP) ──────────────────────────
 MAIL_MAILER=smtp
-MAIL_HOST=sandbox.smtp.mailtrap.io   # reemplazá con tu proveedor
-MAIL_PORT=2525
-MAIL_USERNAME=                       # tu usuario SMTP
-MAIL_PASSWORD=                       # tu contraseña SMTP
-MAIL_FROM_ADDRESS=noreply@nexum.app
-MAIL_FROM_NAME="${APP_NAME}"
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=codisrl2026@gmail.com
+MAIL_PASSWORD=                    # solicitar al líder del equipo
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=codisrl2026@gmail.com
+MAIL_FROM_NAME="Equipo Codi"
 
 # ─── URLs del sistema ──────────────────────────────────────────
 FRONTEND_URL=http://localhost:5173   # URL del frontend React
@@ -183,12 +184,36 @@ FRONTEND_URL=http://localhost:5173   # URL del frontend React
 ADMIN_PASSWORD=Admin1234!            # contraseña del usuario admin@nexun.com
 ```
 
-### Recomendación para desarrollo
+### Configuración de correo (Gmail SMTP)
 
-Para probar emails sin un servidor SMTP real, podés usar [Mailtrap](https://mailtrap.io) (plan gratuito) o configurar `MAIL_MAILER=log` para que los emails se escriban en `storage/logs/laravel.log`:
+**¿Por qué se necesita un App Password?**
+Gmail no permite usar la contraseña normal para envío SMTP desde aplicaciones. Se requiere generar una contraseña especial.
 
-```env
-MAIL_MAILER=log
+**Pasos para generarla (solo el administrador de la cuenta):**
+1. Entrá a myaccount.google.com con la cuenta `codisrl2026@gmail.com`
+2. Seguridad → Verificación en dos pasos → Activar (si no está activa)
+3. Seguridad → Contraseñas de aplicaciones
+4. Seleccioná App: Correo / Dispositivo: Windows
+5. Copiá la contraseña de 16 caracteres generada
+6. Pegala en `MAIL_PASSWORD` del `.env`
+
+**Importante:**
+- Nunca subas el `.env` al repositorio Git
+- El `MAIL_PASSWORD` se comparte únicamente por canal privado del equipo
+- Sin esta configuración los emails de verificación y recuperación de contraseña no se enviarán
+
+### Cola de trabajos
+
+**Para que los emails se envíen correctamente**, el worker de cola debe estar corriendo en una terminal separada:
+
+```bash
+php artisan queue:work
+```
+
+Sin este comando activo, los emails quedan pendientes y no llegan al destinatario. Para desarrollo puntual podés usar:
+
+```bash
+php artisan queue:work --stop-when-empty
 ```
 
 ---

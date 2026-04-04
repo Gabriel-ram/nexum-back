@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Profile;
+use App\Models\Portfolio;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -21,9 +21,9 @@ class ProfessionalUserSeeder extends Seeder
                     'email_verified_at' => now(),
                     'is_active'         => true,
                 ],
-                'profile' => [
+                'portfolio' => [
                     'profession'   => 'Full Stack Developer',
-                    'bio'          => 'Desarrolladora web con 5 años de experiencia en Laravel y React. Apasionada por el código limpio y las buenas prácticas.',
+                    'biography'    => 'Desarrolladora web con 5 años de experiencia en Laravel y React. Apasionada por el código limpio y las buenas prácticas.',
                     'linkedin_url' => 'https://www.linkedin.com/in/ana-garcia-dev',
                     'github_url'   => 'https://github.com/anagarcia-dev',
                 ],
@@ -37,9 +37,9 @@ class ProfessionalUserSeeder extends Seeder
                     'email_verified_at' => now(),
                     'is_active'         => true,
                 ],
-                'profile' => [
+                'portfolio' => [
                     'profession'   => 'UX/UI Designer',
-                    'bio'          => 'Diseñador de experiencias digitales con enfoque en accesibilidad e interfaces intuitivas. 7 años de experiencia en productos SaaS.',
+                    'biography'    => 'Diseñador de experiencias digitales con enfoque en accesibilidad e interfaces intuitivas. 7 años de experiencia en productos SaaS.',
                     'linkedin_url' => 'https://www.linkedin.com/in/carlos-mendez-ux',
                     'github_url'   => null,
                 ],
@@ -53,9 +53,9 @@ class ProfessionalUserSeeder extends Seeder
                     'email_verified_at' => now(),
                     'is_active'         => true,
                 ],
-                'profile' => [
+                'portfolio' => [
                     'profession'   => 'Data Scientist',
-                    'bio'          => 'Científica de datos especializada en machine learning y visualización. Experiencia en Python, TensorFlow y análisis predictivo.',
+                    'biography'    => 'Científica de datos especializada en machine learning y visualización. Experiencia en Python, TensorFlow y análisis predictivo.',
                     'linkedin_url' => 'https://www.linkedin.com/in/sofia-romero-data',
                     'github_url'   => 'https://github.com/sofiaromero-ds',
                 ],
@@ -70,9 +70,9 @@ class ProfessionalUserSeeder extends Seeder
 
             $user->syncRoles(['professional']);
 
-            Profile::firstOrCreate(
+            Portfolio::firstOrCreate(
                 ['user_id' => $user->id],
-                array_merge($data['profile'], ['user_id' => $user->id])
+                array_merge($data['portfolio'], ['user_id' => $user->id])
             );
         }
     }
