@@ -204,6 +204,26 @@
       "description": "Endpoints exclusivos para usuarios con rol 'admin'. Todos requieren Authorization: Bearer {{token}} con token de un admin.",
       "item": [
         {
+          "name": "Listar Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/users?is_active=true&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "users"],
+              "query": [
+                { "key": "is_active", "value": "true", "description": "Filtrar por estado activo (true/false). Opcional." },
+                { "key": "per_page", "value": "20", "description": "Registros por página, máx 100 (opcional, default 20)" }
+              ]
+            },
+            "description": "Devuelve una lista paginada de todos los usuarios (excepto el admin autenticado). Cada usuario incluye: id, first_name, last_name, email, role (admin/professional), is_active, created_at, y portfolio con global_privacy (null si no tiene portfolio creado). Filtros opcionales: is_active=true/false, per_page=n (máx 100)."
+          }
+        },
+        {
           "name": "Toggle Estado de Usuario",
           "request": {
             "method": "PATCH",

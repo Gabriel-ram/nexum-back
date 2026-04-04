@@ -37,6 +37,7 @@ Route::prefix('v1')->group(function () {
 
     // HU-5A + HU-6: Rutas de administración
     Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+        Route::get('/users', [AdminUserController::class, 'index']);
         Route::patch('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus']);
         Route::get('/activity-log', [ActivityLogController::class, 'index']);
     });

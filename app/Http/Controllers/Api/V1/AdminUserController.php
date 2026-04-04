@@ -5,13 +5,48 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AdminUserController extends Controller
 {
-    public function toggleStatus(User $user): JsonResponse
+    public function index(Request $request): JsonResponse
+    {
+        $perPage = min((int) $request->input('per_page', 20), 100);
+
+        $query = User::with(['portfolio', 'roles'])
+            ->where('id', '!=', $request->user()->id);
+
+        if ($request->has('is_active')) {
+            $query->where('is_active', filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN));
+        }
+
+        $users = $query->paginate($perPage);
+
+        return response()->json([
+            'data' => $users->map(fn (User $user) => [
+                'id'         => $user->id,
+                'first_name' => $user->first_name,
+                'last_name'  => $user->last_name,
+                'email'      => $user->email,
+                'role'       => $user->roles->first()?->name,
+                'is_active'  => $user->is_active,
+                'created_at' => $user->created_at->toISOString(),
+                'portfolio'  => $user->portfolio
+                    ? ['global_privacy' => $user->portfolio->global_privacy]
+                    : null,
+            ]),
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'per_page'     => $users->perPage(),
+                'total'        => $users->total(),
+            ],
+        ]);
+    }
+
+    public function toggleStatus(Request $request, User $user): JsonResponse
     {
         // Prevenir que el admin se desactive a sí mismo
-        if ($user->id === auth()->id()) {
+        if ($user->id === $request->user()->id) {
             return response()->json(['message' => 'You cannot change the status of your own account.'], 422);
         }
 
