@@ -347,26 +347,49 @@ avatar: [archivo .jpg/.jpeg/.png/.webp, máx 2MB]
   "data": [
     {
       "id": 1,
+      "event": "updated",
+      "log_name": "portfolio",
+      "created_at": "2026-04-04T17:35:56.000000Z",
+      "causer": {
+        "id": 2,
+        "first_name": "Juan",
+        "last_name": "García",
+        "email": "juan@example.com"
+      },
+      "properties": {
+        "old":        { "linkedin_url": "https://linkedin.com/in/viejo" },
+        "attributes": { "linkedin_url": "https://linkedin.com/in/nuevo" }
+      }
+    },
+    {
+      "id": 2,
+      "event": "updated",
       "log_name": "user",
-      "description": "updated",
-      "subject_type": "App\\Models\\User",
-      "subject_id": 3,
+      "created_at": "2026-04-04T18:00:00.000000Z",
       "causer": {
         "id": 1,
         "first_name": "Admin",
-        "last_name": "Nexun",
-        "email": "admin@nexun.com"
+        "last_name": "Nexum",
+        "email": "admin@nexum.com"
       },
       "properties": {
-        "attributes": { "is_active": false },
-        "old":        { "is_active": true }
-      },
-      "created_at": "2026-03-30T18:00:00.000000Z"
+        "old":        { "is_active": true },
+        "attributes": { "is_active": false }
+      }
     }
   ],
-  "meta": { "current_page": 1, "per_page": 20, "total": 1 }
+  "meta": { "current_page": 1, "per_page": 20, "total": 2 }
 }
 ```
+
+**Campos auditados por modelo:**
+
+| Modelo | Campos auditados |
+|---|---|
+| `user` | `first_name`, `last_name`, `email`, `is_active`, `deactivated_by_admin` |
+| `portfolio` | `profession`, `biography`, `phone`, `location`, `global_privacy`, `design_pattern`, `linkedin_url`, `github_url`, `avatar_path` |
+
+Solo se generan registros cuando al menos un campo cambia (`logOnlyDirty`). `properties.old` contiene los valores anteriores y `properties.attributes` los nuevos. Si la acción fue realizada por el sistema (seeders), `causer` es `null`.
 
 ---
 

@@ -29,7 +29,7 @@ class Portfolio extends Model
     {
         return LogOptions::defaults()
             ->useLogName('portfolio')
-            ->logOnly(['profession', 'biography', 'phone', 'location', 'global_privacy', 'design_pattern', 'linkedin_url', 'github_url'])
+            ->logOnly(['profession', 'biography', 'phone', 'location', 'global_privacy', 'design_pattern', 'linkedin_url', 'github_url', 'avatar_path'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

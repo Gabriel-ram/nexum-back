@@ -27,6 +27,27 @@ class ActivityLogController extends Controller
         $perPage = $request->input('per_page', 20);
         $logs    = $query->paginate($perPage);
 
-        return response()->json($logs);
+        $data = $logs->getCollection()->map(fn (Activity $activity) => [
+            'id'         => $activity->id,
+            'event'      => $activity->event,
+            'log_name'   => $activity->log_name,
+            'created_at' => $activity->created_at,
+            'causer'     => $activity->causer ? [
+                'id'         => $activity->causer->id,
+                'first_name' => $activity->causer->first_name,
+                'last_name'  => $activity->causer->last_name,
+                'email'      => $activity->causer->email,
+            ] : null,
+            'properties' => $activity->properties,
+        ]);
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'current_page' => $logs->currentPage(),
+                'per_page'     => $logs->perPage(),
+                'total'        => $logs->total(),
+            ],
+        ]);
     }
 }
