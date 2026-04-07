@@ -9,7 +9,6 @@ use App\Http\Resources\PortfolioResource;
 use App\Models\Portfolio;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class PortfolioController extends Controller
 {
@@ -48,14 +47,16 @@ class PortfolioController extends Controller
         $portfolio = $request->user()->portfolio;
 
         if ($portfolio?->avatar_path) {
-            Storage::disk('public')->delete($portfolio->avatar_path);
+            cloudinary()->uploadApi()->destroy($portfolio->avatar_path);
         }
 
-        $avatarPath = $request->file('avatar')->store('avatars', 'public');
+        $result = cloudinary()->uploadApi()->upload($request->file('avatar')->getRealPath(), [
+            'folder' => 'nexun/avatars',
+        ]);
 
         $portfolio = Portfolio::updateOrCreate(
             ['user_id' => $request->user()->id],
-            ['avatar_path' => $avatarPath]
+            ['avatar_path' => $result['public_id']]
         );
 
         return new PortfolioResource($portfolio->load('user'));

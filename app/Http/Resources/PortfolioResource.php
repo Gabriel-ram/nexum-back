@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class PortfolioResource extends JsonResource
 {
@@ -22,7 +21,7 @@ class PortfolioResource extends JsonResource
             'biography'    => $this->biography,
             'phone'        => $this->phone,
             'location'     => $this->location,
-            'avatar_url'   => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null,
+            'avatar_url'   => $this->avatar_path ? cloudinary()->image($this->avatar_path)->toUrl() : null,
             'linkedin_url' => $this->linkedin_url,
             'github_url'   => $this->github_url,
             'design_pattern'  => $this->design_pattern,
