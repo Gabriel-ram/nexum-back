@@ -30,10 +30,10 @@ class AuthController extends Controller
 
         $user->assignRole('professional');
 
-        $user->markEmailAsVerified();
+        $user->notify(new VerifyEmailQueued);
 
         return response()->json([
-            'message' => 'Registration successful.',
+            'message' => 'Registration successful. Please check your email to verify your account.',
             'user'    => [
                 'id'         => $user->id,
                 'first_name' => $user->first_name,
