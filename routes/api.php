@@ -3,10 +3,14 @@
 use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\FeaturedProfilesController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+
+    // Public: featured profiles for landing page
+    Route::get('/featured-profiles', [FeaturedProfilesController::class, 'index']);
 
     Route::prefix('auth')->group(function () {
 

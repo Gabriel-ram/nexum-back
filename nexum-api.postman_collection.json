@@ -19,6 +19,23 @@
   ],
   "item": [
     {
+      "name": "Public",
+      "description": "Endpoints públicos que no requieren autenticación.",
+      "item": [
+        {
+          "name": "Featured Profiles",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/featured-profiles", "host": ["{{base_url}}"], "path": ["api", "v1", "featured-profiles"] },
+            "description": "Devuelve los 3 perfiles profesionales destacados para la landing page. No requiere autenticación.\n\nRespuesta esperada:\n{\n  \"data\": [\n    {\n      \"first_name\": \"Ana\",\n      \"last_name\": \"García\",\n      \"location\": null,\n      \"avatar_url\": null,\n      \"projects_count\": 0\n    },\n    {\n      \"first_name\": \"Carlos\",\n      \"last_name\": \"Méndez\",\n      \"location\": null,\n      \"avatar_url\": null,\n      \"projects_count\": 0\n    },\n    {\n      \"first_name\": \"Sofía\",\n      \"last_name\": \"Romero\",\n      \"location\": null,\n      \"avatar_url\": null,\n      \"projects_count\": 0\n    }\n  ]\n}\n\nNotas: location y avatar_url son null hasta que el profesional complete su portfolio. projects_count es 0 (placeholder hasta que exista tabla de proyectos). Los 3 perfiles son estáticos: ana.garcia@portfolio.test, carlos.mendez@portfolio.test, sofia.romero@portfolio.test."
+          }
+        }
+      ]
+    },
+    {
       "name": "Auth",
       "description": "Registro, verificación de email, login, logout y recuperación de contraseña.",
       "item": [
@@ -90,7 +107,7 @@
             "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "login"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@nexun.com\",\n  \"password\": \"Admin1234!\"\n}",
+              "raw": "{\n  \"email\": \"admin@portfolio.test\",\n  \"password\": \"Admin1234!\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Autentica al usuario y devuelve un token Sanctum. Requiere email verificado e is_active=true. Throttle: 5 intentos/minuto por IP. En caso de cuenta desactivada por el admin devuelve 403."
