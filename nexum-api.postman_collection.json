@@ -15,6 +15,11 @@
       "key": "token",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "project_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -30,7 +35,7 @@
               { "key": "Accept", "value": "application/json" }
             ],
             "url": { "raw": "{{base_url}}/api/v1/featured-profiles", "host": ["{{base_url}}"], "path": ["api", "v1", "featured-profiles"] },
-            "description": "Devuelve los 3 perfiles profesionales destacados para la landing page. No requiere autenticación.\n\nRespuesta esperada:\n{\n  \"data\": [\n    {\n      \"first_name\": \"Ana\",\n      \"last_name\": \"García\",\n      \"location\": null,\n      \"avatar_url\": null,\n      \"projects_count\": 0\n    },\n    {\n      \"first_name\": \"Carlos\",\n      \"last_name\": \"Méndez\",\n      \"location\": null,\n      \"avatar_url\": null,\n      \"projects_count\": 0\n    },\n    {\n      \"first_name\": \"Sofía\",\n      \"last_name\": \"Romero\",\n      \"location\": null,\n      \"avatar_url\": null,\n      \"projects_count\": 0\n    }\n  ]\n}\n\nNotas: location y avatar_url son null hasta que el profesional complete su portfolio. projects_count es 0 (placeholder hasta que exista tabla de proyectos). Los 3 perfiles son estáticos: ana.garcia@portfolio.test, carlos.mendez@portfolio.test, sofia.romero@portfolio.test."
+            "description": "Devuelve los 3 perfiles profesionales destacados para la landing page. No requiere autenticación."
           }
         }
       ]
@@ -53,7 +58,7 @@
               "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Pérez\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"Password123!\",\n  \"password_confirmation\": \"Password123!\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Crea un nuevo usuario con rol 'professional' y envía un email de verificación en cola. Devuelve 201 con los datos básicos del usuario (sin token — debe verificar email primero)."
+            "description": "Crea un nuevo usuario con rol 'professional' y envía un email de verificación en cola. Devuelve 201."
           }
         },
         {
@@ -68,15 +73,15 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "auth", "email", "verify", ":id", ":hash"],
               "variable": [
-                { "key": "id", "value": "1", "description": "ID del usuario" },
-                { "key": "hash", "value": "abc123", "description": "Hash SHA1 del email" }
+                { "key": "id", "value": "1" },
+                { "key": "hash", "value": "abc123" }
               ],
               "query": [
                 { "key": "expires", "value": "1234567890" },
                 { "key": "signature", "value": "firma_generada_por_laravel" }
               ]
             },
-            "description": "Verifica el email del usuario usando el link firmado recibido por correo. URL completa se obtiene del email de verificación. Devuelve 200 con mensaje de éxito."
+            "description": "Verifica el email usando el link firmado recibido por correo."
           }
         },
         {
@@ -92,12 +97,26 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"juan.perez@example.com\"\n}",
               "options": { "raw": { "language": "json" } }
-            },
-            "description": "Reenvía el email de verificación. Throttle: 6 intentos/minuto. Siempre devuelve 200 (no expone si el email existe o ya está verificado)."
+            }
           }
         },
         {
           "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  console.log('Token guardado automáticamente.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -107,10 +126,10 @@
             "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "login"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@portfolio.test\",\n  \"password\": \"Admin1234!\"\n}",
+              "raw": "{\n  \"email\": \"professional1@nexun.com\",\n  \"password\": \"Admin1234!\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Autentica al usuario y devuelve un token Sanctum. Requiere email verificado e is_active=true. Throttle: 5 intentos/minuto por IP. En caso de cuenta desactivada por el admin devuelve 403."
+            "description": "Autentica al usuario. El script de Tests guarda el token en {{token}} automáticamente."
           }
         },
         {
@@ -122,8 +141,7 @@
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/api/v1/auth/logout", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "logout"] },
-            "body": { "mode": "none" },
-            "description": "Revoca el token actual del usuario autenticado. Requiere Authorization: Bearer {{token}}."
+            "body": { "mode": "none" }
           }
         },
         {
@@ -139,8 +157,7 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"juan.perez@example.com\"\n}",
               "options": { "raw": { "language": "json" } }
-            },
-            "description": "Envía un email en cola con el link de reset de contraseña apuntando al frontend ({FRONTEND_URL}/reset-password?token=...&email=...). Siempre devuelve 200 para no exponer si el email existe."
+            }
           }
         },
         {
@@ -156,15 +173,14 @@
               "mode": "raw",
               "raw": "{\n  \"token\": \"token_del_email_de_reset\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"NuevaPassword123!\",\n  \"password_confirmation\": \"NuevaPassword123!\"\n}",
               "options": { "raw": { "language": "json" } }
-            },
-            "description": "Cambia la contraseña usando el token recibido por email. Al completarse, revoca todos los tokens Sanctum activos del usuario. Devuelve 400 si el token es inválido o expiró."
+            }
           }
         }
       ]
     },
     {
       "name": "Portfolio",
-      "description": "Gestión del portfolio/perfil del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}}.",
+      "description": "Gestión del portfolio del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}}.",
       "item": [
         {
           "name": "Ver Portfolio",
@@ -175,7 +191,7 @@
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/api/v1/portfolio", "host": ["{{base_url}}"], "path": ["api", "v1", "portfolio"] },
-            "description": "Devuelve el portfolio del usuario autenticado. La respuesta incluye: user (id, first_name, last_name, email), profession, biography, phone, location, avatar_url (URL pública completa o null), linkedin_url, github_url, design_pattern, global_privacy, views_count. Devuelve 404 si aún no tiene portfolio creado."
+            "description": "Devuelve el portfolio del usuario autenticado. Devuelve 404 si aún no tiene portfolio."
           }
         },
         {
@@ -193,7 +209,7 @@
               "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"García\",\n  \"profession\": \"Full Stack Developer\",\n  \"biography\": \"Desarrollador con experiencia en Laravel y Vue.js.\",\n  \"phone\": \"+34 600 000 000\",\n  \"location\": \"Madrid, España\",\n  \"linkedin_url\": \"https://www.linkedin.com/in/mi-perfil\",\n  \"github_url\": \"https://github.com/mi-usuario\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Crea el portfolio si no existe, o lo actualiza (updateOrCreate). Todos los campos son opcionales — enviar solo los que se quieren modificar. first_name y last_name actualizan el modelo User. El resto actualiza portfolios. Aplica strip_tags() sobre campos de texto. Para subir/cambiar la foto de perfil usar el endpoint POST /portfolio/avatar."
+            "description": "Crea o actualiza el portfolio (updateOrCreate). IMPORTANTE: este endpoint debe ejecutarse antes de crear proyectos, ya que los proyectos requieren que exista un portfolio."
           }
         },
         {
@@ -208,10 +224,159 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "avatar", "type": "file", "description": "Imagen de perfil — obligatoria. Formatos: jpg, jpeg, png, webp. Máximo 2MB. Reemplaza la imagen anterior automáticamente." }
+                { "key": "avatar", "type": "file", "description": "jpg, jpeg, png o webp. Máximo 2MB." }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Proyectos (HU-9)",
+      "description": "CRUD de proyectos del portfolio del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener un portfolio creado (usar 'Crear / Actualizar Portfolio' primero).\n\nCampos disponibles:\n- title (obligatorio): nombre del proyecto\n- description (opcional): descripción detallada\n- project_url (opcional): URL del proyecto/repositorio\n- technologies (opcional): array de strings con las tecnologías usadas\n- category_id (opcional): ID de categoría obtenido de GET /categories",
+      "item": [
+        {
+          "name": "Listar Proyectos",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects"]
+            },
+            "description": "Devuelve todos los proyectos del usuario autenticado. Devuelve lista vacía si no tiene portfolio o proyectos."
+          }
+        },
+        {
+          "name": "Listar Proyectos (filtrado por categoría)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects?category_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects"],
+              "query": [
+                { "key": "category_id", "value": "1", "description": "Filtrar por ID de categoría (opcional)" }
               ]
             },
-            "description": "Sube o reemplaza la foto de perfil del usuario. Requiere Content-Type: multipart/form-data (automático en Postman al usar form-data — NO agregar el header manualmente). El campo avatar es obligatorio. Elimina la imagen anterior del storage antes de guardar la nueva. Devuelve el portfolio completo con avatar_url actualizada."
+            "description": "Filtra los proyectos por categoría. Reemplaza el valor de category_id por el ID obtenido de GET /categories."
+          }
+        },
+        {
+          "name": "Listar Proyectos (ordenado)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects?sort_by=title&sort_dir=asc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects"],
+              "query": [
+                { "key": "sort_by", "value": "title", "description": "Campo de orden: title o created_at (default: created_at)" },
+                { "key": "sort_dir", "value": "asc", "description": "Dirección: asc o desc (default: desc)" }
+              ]
+            },
+            "description": "Ordena los proyectos por título o fecha. sort_by acepta 'title' o 'created_at'. sort_dir acepta 'asc' o 'desc'."
+          }
+        },
+        {
+          "name": "Crear Proyecto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "  pm.collectionVariables.set('project_id', json.data.id);",
+                  "  console.log('project_id guardado: ' + json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/projects", "host": ["{{base_url}}"], "path": ["api", "v1", "projects"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Mi Portfolio App\",\n  \"description\": \"Aplicación full-stack para gestionar mi portfolio profesional.\",\n  \"project_url\": \"https://github.com/mi-usuario/portfolio-app\",\n  \"technologies\": [\"Laravel\", \"Vue.js\", \"PostgreSQL\", \"Tailwind CSS\"],\n  \"category_id\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Crea un nuevo proyecto. El script de Tests guarda el ID en {{project_id}} automáticamente para usarlo en editar/eliminar.\n\nValidaciones:\n- title: obligatorio, máx 255 caracteres\n- description: opcional, máx 5000 caracteres\n- project_url: opcional, debe ser URL válida\n- technologies: opcional, array de strings (máx 20 items, cada uno máx 50 chars)\n- category_id: opcional, debe existir en la tabla categories\n\nDevuelve 404 si el usuario no tiene portfolio creado."
+          }
+        },
+        {
+          "name": "Editar Proyecto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "{{project_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Mi Portfolio App v2\",\n  \"description\": \"Versión mejorada con nuevas funcionalidades.\",\n  \"project_url\": \"https://github.com/mi-usuario/portfolio-app\",\n  \"technologies\": [\"Laravel\", \"Vue.js\", \"PostgreSQL\", \"Docker\"],\n  \"category_id\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Actualiza un proyecto existente. Usa {{project_id}} guardado al crear. Solo puede editar proyectos propios — devuelve 404 si el proyecto pertenece a otro usuario."
+          }
+        },
+        {
+          "name": "Eliminar Proyecto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "{{project_id}}"]
+            },
+            "description": "Elimina un proyecto. Solo puede eliminar proyectos propios — devuelve 404 si el proyecto pertenece a otro usuario. Devuelve 200 con mensaje de confirmación."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categorías (HU-10)",
+      "description": "Listado de categorías disponibles para clasificar proyectos. Requiere autenticación.",
+      "item": [
+        {
+          "name": "Listar Categorías",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/categories", "host": ["{{base_url}}"], "path": ["api", "v1", "categories"] },
+            "description": "Devuelve todas las categorías disponibles ordenadas por nombre. Úsalas para obtener el category_id al crear/editar proyectos.\n\nCategorías seeded:\n- Web Development\n- Mobile Development\n- Data Science\n- DevOps\n- UI/UX Design\n- Machine Learning\n- Cybersecurity\n- Open Source\n- Other"
           }
         }
       ]
@@ -236,8 +401,7 @@
                 { "key": "is_active", "value": "true", "description": "Filtrar por estado activo (true/false). Opcional." },
                 { "key": "per_page", "value": "20", "description": "Registros por página, máx 100 (opcional, default 20)" }
               ]
-            },
-            "description": "Devuelve una lista paginada de todos los usuarios (excepto el admin autenticado). Cada usuario incluye: id, first_name, last_name, email, role (admin/professional), is_active, created_at, y portfolio con global_privacy (null si no tiene portfolio creado). Filtros opcionales: is_active=true/false, per_page=n (máx 100)."
+            }
           }
         },
         {
@@ -253,11 +417,10 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "admin", "users", ":user_id", "toggle-status"],
               "variable": [
-                { "key": "user_id", "value": "2", "description": "ID del usuario a activar/desactivar" }
+                { "key": "user_id", "value": "2" }
               ]
             },
-            "body": { "mode": "none" },
-            "description": "Activa o desactiva un usuario. Si se desactiva: is_active=false, deactivated_by_admin=true, revoca todos sus tokens. Si se reactiva: is_active=true, deactivated_by_admin=false. No puede usarse sobre la propia cuenta del admin (devuelve 422)."
+            "body": { "mode": "none" }
           }
         },
         {
@@ -276,8 +439,7 @@
                 { "key": "user_id", "value": "2", "description": "Filtrar por ID de usuario (opcional)" },
                 { "key": "per_page", "value": "20", "description": "Registros por página, máx 100 (opcional, default 20)" }
               ]
-            },
-            "description": "Devuelve el log de actividad paginado. Registra eventos created y updated de los modelos User y Portfolio. Campos auditados — User: first_name, last_name, email, is_active, deactivated_by_admin. Portfolio: profession, biography, phone, location, global_privacy, design_pattern, linkedin_url, github_url."
+            }
           }
         }
       ]
