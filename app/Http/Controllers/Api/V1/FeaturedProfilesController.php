@@ -17,7 +17,7 @@ class FeaturedProfilesController extends Controller
 
     public function index(): JsonResponse
     {
-        $users = User::with('portfolio')
+        $users = User::with(['portfolio' => fn ($q) => $q->withCount('projects')])
             ->whereIn('email', self::FEATURED_EMAILS)
             ->get();
 
@@ -31,7 +31,7 @@ class FeaturedProfilesController extends Controller
                 'avatar_url'     => $portfolio?->avatar_path
                     ? Cloudinary::image($portfolio->avatar_path)->toUrl()
                     : null,
-                'projects_count' => 0,
+                'projects_count' => $portfolio?->projects_count ?? 0,
             ];
         });
 
