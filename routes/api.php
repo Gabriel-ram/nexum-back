@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CertificationController;
 use App\Http\Controllers\Api\V1\FeaturedProfilesController;
+use App\Http\Controllers\Api\V1\SkillController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use Illuminate\Support\Facades\Route;
@@ -55,6 +56,14 @@ Route::prefix('v1')->group(function () {
         Route::put('/', [PortfolioController::class, 'update']);
         Route::post('/avatar', [PortfolioController::class, 'updateAvatar']);
 
+        // HU-4: Habilidades
+        Route::prefix('skills')->group(function () {
+            Route::get('/', [SkillController::class, 'index']);
+            Route::post('/', [SkillController::class, 'store']);
+            Route::put('/{portfolioSkill}', [SkillController::class, 'update']);
+            Route::delete('/{portfolioSkill}', [SkillController::class, 'destroy']);
+        });
+
         // HU-11: Certificaciones
         Route::prefix('certifications')->group(function () {
             Route::get('/', [CertificationController::class, 'index']);
@@ -70,6 +79,7 @@ Route::prefix('v1')->group(function () {
     // HU-10: Clasificación por categorías
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/categories', [CategoryController::class, 'index']);
+        Route::get('/skills/catalog', [SkillController::class, 'catalog']);
 
         Route::get('/projects', [ProjectController::class, 'index']);
         Route::post('/projects', [ProjectController::class, 'store']);

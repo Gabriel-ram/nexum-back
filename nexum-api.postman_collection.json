@@ -25,6 +25,11 @@
       "key": "certification_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "portfolio_skill_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -542,6 +547,161 @@
             },
             "body": { "mode": "none" },
             "description": "Reactiva una certificación desactivada (is_active = true). Devuelve 200 con el recurso actualizado.\n\nTip: Usar 'Listar Certificaciones (incluyendo inactivas)' para obtener el ID de la certificación a restaurar.\n\nDevuelve 403 si la certificación no pertenece al usuario autenticado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Habilidades (HU-4)",
+      "description": "Gestión de habilidades del portfolio del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener un portfolio creado.\n\nTipos de habilidades:\n- technical: requieren nivel (basic, intermediate, advanced)\n- soft: no tienen nivel\n\nLas habilidades nunca se eliminan permanentemente — DELETE desactiva (is_active = false). Si el usuario agrega una habilidad que desactivó antes, el sistema la reactiva automáticamente.",
+      "item": [
+        {
+          "name": "Catálogo de Habilidades",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/skills/catalog",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "skills", "catalog"]
+            },
+            "description": "Devuelve el catálogo completo de habilidades disponibles agrupadas por tipo (technical/soft) y categoría. Usá los IDs de aquí para agregar habilidades al portfolio."
+          }
+        },
+        {
+          "name": "Mis Habilidades (activas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/skills",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "skills"]
+            },
+            "description": "Devuelve las habilidades activas del usuario agrupadas por tipo (technical/soft) y categoría. Lista vacía si no tiene portfolio o habilidades activas."
+          }
+        },
+        {
+          "name": "Mis Habilidades (incluyendo inactivas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/skills?include_inactive=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "skills"],
+              "query": [
+                { "key": "include_inactive", "value": "true", "description": "Incluye habilidades desactivadas (is_active = false)." }
+              ]
+            },
+            "description": "Devuelve las habilidades desactivadas del usuario. Útil para consultar el historial."
+          }
+        },
+        {
+          "name": "Agregar Habilidad Técnica",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "  pm.collectionVariables.set('portfolio_skill_id', json.data.id);",
+                  "  console.log('portfolio_skill_id guardado: ' + json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/skills",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "skills"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skill_id\": 10,\n  \"level\": \"avanzado\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Agrega una habilidad técnica al portfolio. El skill_id debe obtenerse del catálogo (GET /skills/catalog).\n\nValidaciones:\n- skill_id: obligatorio, debe existir en el catálogo\n- level: obligatorio para habilidades técnicas (basic, intermediate, advanced)\n\nSi la habilidad estaba desactivada, se reactiva automáticamente con el nuevo nivel.\nDevuelve 422 si la habilidad ya está activa en el portfolio.\nDevuelve 404 si el usuario no tiene portfolio."
+          }
+        },
+        {
+          "name": "Agregar Habilidad Blanda",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/skills",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "skills"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skill_id\": 80\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Agrega una habilidad blanda al portfolio. NO se envía level (las habilidades blandas no tienen nivel).\n\nID 80 = 'Comunicación técnica' (primera habilidad blanda del catálogo).\nUsá GET /skills/catalog para ver todos los IDs disponibles.\n\nSi se envía level para una habilidad blanda, devuelve 422.\nSi la habilidad estaba desactivada, se reactiva automáticamente."
+          }
+        },
+        {
+          "name": "Editar Nivel de Habilidad Técnica",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/skills/{{portfolio_skill_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "skills", "{{portfolio_skill_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"level\": \"intermedio\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Cambia el nivel de una habilidad técnica activa. Solo aplica a habilidades técnicas (las blandas no tienen nivel).\n\nNiveles válidos: basic, intermediate, advanced\n\nDevuelve 422 si la habilidad es blanda o está inactiva.\nDevuelve 403 si la habilidad no pertenece al usuario autenticado."
+          }
+        },
+        {
+          "name": "Desactivar Habilidad",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/skills/{{portfolio_skill_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "skills", "{{portfolio_skill_id}}"]
+            },
+            "body": { "mode": "none" },
+            "description": "Desactiva la habilidad (is_active = false). NO la elimina de la base de datos. Devuelve 200 con el recurso actualizado.\n\nDevuelve 403 si la habilidad no pertenece al usuario autenticado."
           }
         }
       ]
