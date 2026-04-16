@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\CertificationController;
 use App\Http\Controllers\Api\V1\FeaturedProfilesController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -53,6 +54,16 @@ Route::prefix('v1')->group(function () {
         Route::get('/', [PortfolioController::class, 'show']);
         Route::put('/', [PortfolioController::class, 'update']);
         Route::post('/avatar', [PortfolioController::class, 'updateAvatar']);
+
+        // HU-11: Certificaciones
+        Route::prefix('certifications')->group(function () {
+            Route::get('/', [CertificationController::class, 'index']);
+            Route::post('/', [CertificationController::class, 'store']);
+            Route::put('/{certification}', [CertificationController::class, 'update']);
+            Route::post('/{certification}/image', [CertificationController::class, 'updateImage']);
+            Route::delete('/{certification}', [CertificationController::class, 'destroy']);
+            Route::patch('/{certification}/restore', [CertificationController::class, 'restore']);
+        });
     });
 
     // HU-9: Gestión de proyectos

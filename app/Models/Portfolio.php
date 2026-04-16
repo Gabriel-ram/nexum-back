@@ -45,4 +45,9 @@ class Portfolio extends Model
     {
         return $this->hasMany(Project::class);
     }
+
+    public function certifications(): HasMany
+    {
+        return $this->hasMany(Certification::class)->active()->orderByDesc('issue_date');
+    }
 }

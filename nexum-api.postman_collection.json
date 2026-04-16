@@ -20,6 +20,11 @@
       "key": "project_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "certification_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -377,6 +382,166 @@
             ],
             "url": { "raw": "{{base_url}}/api/v1/categories", "host": ["{{base_url}}"], "path": ["api", "v1", "categories"] },
             "description": "Devuelve todas las categorías disponibles ordenadas por nombre. Úsalas para obtener el category_id al crear/editar proyectos.\n\nCategorías seeded:\n- Web Development\n- Mobile Development\n- Data Science\n- DevOps\n- UI/UX Design\n- Machine Learning\n- Cybersecurity\n- Open Source\n- Other"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Certificaciones ",
+      "description": "Gestión de certificaciones del portfolio del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener un portfolio creado (usar 'Crear / Actualizar Portfolio' primero).\n\nFechas en formato m/Y (ej: 04/2026). Las certificaciones nunca se eliminan físicamente — DELETE desactiva (is_active = false), PATCH restore reactiva.",
+      "item": [
+        {
+          "name": "Listar Certificaciones (activas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/certifications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "certifications"]
+            },
+            "description": "Devuelve las certificaciones activas del usuario autenticado, ordenadas por issue_date descendente. Lista vacía si no tiene portfolio o certificaciones activas."
+          }
+        },
+        {
+          "name": "Listar Certificaciones (incluyendo inactivas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/certifications?include_inactive=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "certifications"],
+              "query": [
+                { "key": "include_inactive", "value": "true", "description": "Incluye certificaciones desactivadas (is_active = false). Útil para ver cuáles se pueden restaurar." }
+              ]
+            },
+            "description": "Devuelve todas las certificaciones del usuario, activas e inactivas. Usalo para obtener el ID de una certificación desactivada antes de restaurarla."
+          }
+        },
+        {
+          "name": "Crear Certificación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "  pm.collectionVariables.set('certification_id', json.data.id);",
+                  "  console.log('certification_id guardado: ' + json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/certifications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "certifications"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "AWS Certified Solutions Architect", "type": "text", "description": "Nombre de la certificación (obligatorio, máx 255)" },
+                { "key": "issuing_entity", "value": "Amazon Web Services", "type": "text", "description": "Entidad emisora (obligatorio, máx 255)" },
+                { "key": "issue_date", "value": "03/2024", "type": "text", "description": "Fecha de emisión en formato m/Y (obligatorio)" },
+                { "key": "expiration_date", "value": "03/2027", "type": "text", "description": "Fecha de vencimiento en formato m/Y (opcional, debe ser posterior a issue_date)" },
+                { "key": "image", "type": "file", "description": "Imagen de la certificación — opcional. Formatos: jpg, jpeg, png, webp. Máx 5MB. Se sube a Cloudinary." }
+              ]
+            },
+            "description": "Crea una nueva certificación. El script de Tests guarda el ID en {{certification_id}} automáticamente.\n\nDevuelve 404 si el usuario no tiene portfolio creado.\nRequiere Content-Type: multipart/form-data (automático al usar form-data en Postman — NO agregar manualmente)."
+          }
+        },
+        {
+          "name": "Editar Certificación (texto)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "certifications", "{{certification_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AWS Certified Solutions Architect — Associate\",\n  \"issuing_entity\": \"Amazon Web Services\",\n  \"issue_date\": \"03/2024\",\n  \"expiration_date\": \"06/2027\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Actualiza los campos de texto de una certificación. Todos los campos son opcionales — enviar solo los que se quieren modificar. Para cambiar la imagen usar POST /{id}/image.\n\nDevuelve 403 si la certificación no pertenece al usuario autenticado."
+          }
+        },
+        {
+          "name": "Actualizar Imagen de Certificación",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}/image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "certifications", "{{certification_id}}", "image"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "image", "type": "file", "description": "Nueva imagen — obligatoria. Formatos: jpg, jpeg, png, webp. Máx 5MB. Reemplaza la imagen anterior en Cloudinary." }
+              ]
+            },
+            "description": "Sube o reemplaza la imagen de una certificación en Cloudinary. Elimina la imagen anterior automáticamente. El campo image es obligatorio.\n\nDevuelve 403 si la certificación no pertenece al usuario autenticado."
+          }
+        },
+        {
+          "name": "Desactivar Certificación",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "certifications", "{{certification_id}}"]
+            },
+            "body": { "mode": "none" },
+            "description": "Desactiva la certificación (is_active = false). NO la elimina de la base de datos. Devuelve 200 con el recurso actualizado.\n\nDevuelve 403 si la certificación no pertenece al usuario autenticado."
+          }
+        },
+        {
+          "name": "Restaurar Certificación",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}/restore",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "portfolio", "certifications", "{{certification_id}}", "restore"]
+            },
+            "body": { "mode": "none" },
+            "description": "Reactiva una certificación desactivada (is_active = true). Devuelve 200 con el recurso actualizado.\n\nTip: Usar 'Listar Certificaciones (incluyendo inactivas)' para obtener el ID de la certificación a restaurar.\n\nDevuelve 403 si la certificación no pertenece al usuario autenticado."
           }
         }
       ]
