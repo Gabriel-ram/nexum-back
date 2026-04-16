@@ -45,7 +45,7 @@
               { "key": "Accept", "value": "application/json" }
             ],
             "url": { "raw": "{{base_url}}/api/v1/featured-profiles", "host": ["{{base_url}}"], "path": ["api", "v1", "featured-profiles"] },
-            "description": "Devuelve los 3 perfiles profesionales destacados para la landing page. No requiere autenticación."
+            "description": "Devuelve los 3 perfiles profesionales destacados para la landing page y las estadísticas globales del sistema. No requiere autenticación.\n\nEstructura de respuesta:\n- data: array de 3 perfiles (first_name, last_name, location, avatar_url, projects_count)\n- stats.total_users: total de usuarios activos en el sistema\n- stats.total_projects: total de proyectos publicados en el sistema"
           }
         }
       ]

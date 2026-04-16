@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Project;
 use App\Models\User;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\JsonResponse;
@@ -35,6 +36,12 @@ class FeaturedProfilesController extends Controller
             ];
         });
 
-        return response()->json(['data' => $profiles]);
+        return response()->json([
+            'data'  => $profiles,
+            'stats' => [
+                'total_users'    => User::where('is_active', true)->role('professional')->count(),
+                'total_projects' => Project::count(),
+            ],
+        ]);
     }
 }
