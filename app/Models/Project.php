@@ -15,6 +15,7 @@ class Project extends Model
 
     protected $fillable = [
         'portfolio_id',
+        'category_id',
         'title',
         'description',
         'project_url',
@@ -29,7 +30,7 @@ class Project extends Model
     {
         return LogOptions::defaults()
             ->useLogName('project')
-            ->logOnly(['title', 'description', 'project_url', 'archived'])
+            ->logOnly(['title', 'description', 'project_url', 'category_id', 'archived'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -37,6 +38,11 @@ class Project extends Model
     public function portfolio(): BelongsTo
     {
         return $this->belongsTo(Portfolio::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ProjectCategory::class, 'category_id');
     }
 
     public function skills(): BelongsToMany

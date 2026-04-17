@@ -15,7 +15,7 @@ class ProjectController extends Controller
 {
     /**
      * Lista todos los proyectos activos (no archivados) del usuario autenticado.
-     * El ordenamiento y filtrado se delegan al frontend dado el volumen acotado por usuario.
+     * El ordenamiento y filtrado por categoría se delegan al frontend.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -27,7 +27,7 @@ class ProjectController extends Controller
 
         $projects = $portfolio->projects()
             ->where('archived', false)
-            ->with('skills')
+            ->with(['category', 'skills'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -35,7 +35,7 @@ class ProjectController extends Controller
     }
 
     /**
-     * Crea un proyecto y asocia las skills seleccionadas.
+     * Crea un proyecto y asocia la categoría y skills seleccionadas.
      */
     public function store(ProjectRequest $request): ProjectResource|JsonResponse
     {
@@ -55,11 +55,11 @@ class ProjectController extends Controller
             $project->skills()->sync($skillIds);
         }
 
-        return (new ProjectResource($project->load('skills')))->response()->setStatusCode(201);
+        return (new ProjectResource($project->refresh()->load(['category', 'skills'])))->response()->setStatusCode(201);
     }
 
     /**
-     * Actualiza los datos del proyecto y sincroniza sus skills.
+     * Actualiza los datos del proyecto, su categoría y sincroniza sus skills.
      */
     public function update(ProjectRequest $request, Project $project): ProjectResource|JsonResponse
     {
@@ -79,7 +79,7 @@ class ProjectController extends Controller
             $project->skills()->sync($skillIds);
         }
 
-        return new ProjectResource($project->load('skills'));
+        return new ProjectResource($project->load(['category', 'skills']));
     }
 
     /**
@@ -99,19 +99,18 @@ class ProjectController extends Controller
     }
 
     /**
-     * Catálogo de skills disponibles para asociar a proyectos.
-     * Incluye skills técnicas (tecnologías) y categorías de proyecto.
+     * Catálogo de skills técnicas disponibles para asociar a proyectos.
      * El frontend llama a este endpoint antes de abrir el modal de crear/editar.
      */
     public function skillsCatalog(): JsonResponse
     {
         $grouped = [];
 
-        foreach (Skill::whereIn('type', ['tecnica', 'project_category'])
+        foreach (Skill::where('type', 'tecnica')
             ->orderBy('category')
             ->orderBy('name')
             ->get() as $skill) {
-            $grouped[$skill->type][$skill->category][] = [
+            $grouped[$skill->category][] = [
                 'id'       => $skill->id,
                 'name'     => $skill->name,
                 'type'     => $skill->type,

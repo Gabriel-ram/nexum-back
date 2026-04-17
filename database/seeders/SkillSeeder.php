@@ -60,21 +60,6 @@ class SkillSeeder extends Seeder
             ],
         ];
 
-        // --- Categorías de proyecto (type = 'project_category') ---
-        // Reemplaza la tabla 'categories' eliminada. El usuario selecciona
-        // a qué área pertenece su proyecto al igual que cualquier otra skill.
-        $projectCategories = [
-            'Web Development',
-            'Mobile Development',
-            'Data Science',
-            'DevOps',
-            'UI/UX Design',
-            'Machine Learning',
-            'Cybersecurity',
-            'Open Source',
-            'Other',
-        ];
-
         foreach ($technical as $category => $names) {
             foreach ($names as $name) {
                 Skill::firstOrCreate(
@@ -93,11 +78,5 @@ class SkillSeeder extends Seeder
             }
         }
 
-        foreach ($projectCategories as $name) {
-            Skill::firstOrCreate(
-                ['name' => $name, 'type' => 'project_category'],
-                ['category' => 'Categoría de Proyecto']
-            );
-        }
     }
 }

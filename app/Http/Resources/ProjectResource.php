@@ -15,6 +15,10 @@ class ProjectResource extends JsonResource
             'description' => $this->description,
             'project_url' => $this->project_url,
             'archived'    => $this->archived,
+            'category'    => $this->whenLoaded('category', fn () => $this->category
+                ? ['id' => $this->category->id, 'name' => $this->category->name]
+                : null
+            ),
             'skills'      => $this->whenLoaded('skills', fn () => $this->skills->map(fn ($skill) => [
                 'id'       => $skill->id,
                 'name'     => $skill->name,

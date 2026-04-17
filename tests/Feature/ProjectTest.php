@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Portfolio;
 use App\Models\Project;
+use App\Models\ProjectCategory;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,7 +32,8 @@ class ProjectTest extends TestCase
         $response = $this->actingAs($user)->getJson('/api/v1/projects');
 
         $response->assertOk()
-            ->assertJsonCount(3, 'data');
+            ->assertJsonCount(3, 'data')
+            ->assertJsonStructure(['data' => [['id', 'title', 'category', 'skills', 'archived']]]);
     }
 
     public function test_archived_projects_are_excluded_from_listing(): void
@@ -44,17 +46,15 @@ class ProjectTest extends TestCase
 
         $response = $this->actingAs($user)->getJson('/api/v1/projects');
 
-        $response->assertOk()
-            ->assertJsonCount(2, 'data');
+        $response->assertOk()->assertJsonCount(2, 'data');
     }
 
     public function test_user_without_portfolio_gets_empty_project_list(): void
     {
         $user = $this->professionalUser();
 
-        $response = $this->actingAs($user)->getJson('/api/v1/projects');
-
-        $response->assertOk()
+        $this->actingAs($user)->getJson('/api/v1/projects')
+            ->assertOk()
             ->assertJsonCount(0, 'data');
     }
 
@@ -80,22 +80,43 @@ class ProjectTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // GET /api/v1/project-categories
+    // -------------------------------------------------------------------------
+
+    public function test_authenticated_user_can_list_project_categories(): void
+    {
+        $user = $this->professionalUser();
+        ProjectCategory::factory()->count(3)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/v1/project-categories');
+
+        $response->assertOk()
+            ->assertJsonCount(3, 'data')
+            ->assertJsonStructure(['data' => [['id', 'name']]]);
+    }
+
+    public function test_unauthenticated_user_cannot_list_project_categories(): void
+    {
+        $this->getJson('/api/v1/project-categories')->assertUnauthorized();
+    }
+
+    // -------------------------------------------------------------------------
     // GET /api/v1/projects/skills
     // -------------------------------------------------------------------------
 
     public function test_authenticated_user_can_get_project_skills_catalog(): void
     {
         $user = $this->professionalUser();
-        Skill::factory()->create(['name' => 'Laravel', 'type' => 'tecnica', 'category' => 'Frameworks & Librerías']);
-        Skill::factory()->create(['name' => 'Web Development', 'type' => 'project_category', 'category' => 'Categoría de Proyecto']);
-        // Soft skills must be excluded
-        Skill::factory()->create(['name' => 'Trabajo en equipo', 'type' => 'blanda', 'category' => 'Colaboración']);
+        Skill::factory()->create(['name' => 'Laravel',         'type' => 'tecnica', 'category' => 'Frameworks & Librerías']);
+        Skill::factory()->create(['name' => 'Trabajo en equipo','type' => 'blanda',  'category' => 'Colaboración']);
 
         $response = $this->actingAs($user)->getJson('/api/v1/projects/skills');
 
         $response->assertOk()
-            ->assertJsonStructure(['data' => ['tecnica', 'project_category']])
+            ->assertJsonStructure(['data'])
             ->assertJsonMissingPath('data.blanda');
+
+        $this->assertArrayHasKey('Frameworks & Librerías', $response->json('data'));
     }
 
     public function test_unauthenticated_user_cannot_get_project_skills_catalog(): void
@@ -112,52 +133,49 @@ class ProjectTest extends TestCase
         $user = $this->professionalUser();
         Portfolio::factory()->create(['user_id' => $user->id]);
 
-        $payload = [
+        $response = $this->actingAs($user)->postJson('/api/v1/projects', [
             'title'       => 'My Portfolio App',
             'description' => 'A full-stack portfolio application.',
             'project_url' => 'https://example.com',
-        ];
-
-        $response = $this->actingAs($user)->postJson('/api/v1/projects', $payload);
+        ]);
 
         $response->assertCreated()
             ->assertJsonPath('data.title', 'My Portfolio App')
-            ->assertJsonStructure(['data' => ['id', 'title', 'description', 'project_url', 'archived', 'skills']]);
+            ->assertJsonPath('data.category', null)
+            ->assertJsonPath('data.archived', false);
 
         $this->assertDatabaseHas('projects', ['title' => 'My Portfolio App']);
     }
 
-    public function test_user_can_create_a_project_with_skills(): void
+    public function test_user_can_create_a_project_with_category_and_skills(): void
     {
         $user = $this->professionalUser();
         Portfolio::factory()->create(['user_id' => $user->id]);
 
-        $skill1 = Skill::factory()->create(['name' => 'Laravel', 'type' => 'tecnica', 'category' => 'Frameworks']);
-        $skill2 = Skill::factory()->create(['name' => 'PostgreSQL', 'type' => 'tecnica', 'category' => 'Bases de Datos']);
+        $category = ProjectCategory::factory()->create(['name' => 'Web Development']);
+        $skill    = Skill::factory()->create(['name' => 'Laravel', 'type' => 'tecnica', 'category' => 'Frameworks']);
 
         $response = $this->actingAs($user)->postJson('/api/v1/projects', [
-            'title'     => 'Project with Skills',
-            'skill_ids' => [$skill1->id, $skill2->id],
+            'title'       => 'My App',
+            'category_id' => $category->id,
+            'skill_ids'   => [$skill->id],
         ]);
 
         $response->assertCreated()
-            ->assertJsonCount(2, 'data.skills');
-
-        $this->assertDatabaseHas('project_skills', ['skill_id' => $skill1->id]);
-        $this->assertDatabaseHas('project_skills', ['skill_id' => $skill2->id]);
+            ->assertJsonPath('data.category.id', $category->id)
+            ->assertJsonPath('data.category.name', 'Web Development')
+            ->assertJsonCount(1, 'data.skills');
     }
 
-    public function test_project_creation_fails_without_title(): void
+    public function test_project_creation_fails_with_invalid_category(): void
     {
         $user = $this->professionalUser();
         Portfolio::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->actingAs($user)->postJson('/api/v1/projects', [
-            'description' => 'No title provided.',
-        ]);
-
-        $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['title']);
+        $this->actingAs($user)->postJson('/api/v1/projects', [
+            'title'       => 'Test',
+            'category_id' => 9999,
+        ])->assertUnprocessable()->assertJsonValidationErrors(['category_id']);
     }
 
     public function test_project_creation_fails_with_invalid_skill_id(): void
@@ -165,24 +183,28 @@ class ProjectTest extends TestCase
         $user = $this->professionalUser();
         Portfolio::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->actingAs($user)->postJson('/api/v1/projects', [
+        $this->actingAs($user)->postJson('/api/v1/projects', [
             'title'     => 'Test',
             'skill_ids' => [99999],
-        ]);
+        ])->assertUnprocessable()->assertJsonValidationErrors(['skill_ids.0']);
+    }
 
-        $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['skill_ids.0']);
+    public function test_project_creation_fails_without_title(): void
+    {
+        $user = $this->professionalUser();
+        Portfolio::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user)->postJson('/api/v1/projects', ['description' => 'No title.'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['title']);
     }
 
     public function test_user_without_portfolio_cannot_create_project(): void
     {
         $user = $this->professionalUser();
 
-        $response = $this->actingAs($user)->postJson('/api/v1/projects', [
-            'title' => 'Some Project',
-        ]);
-
-        $response->assertNotFound();
+        $this->actingAs($user)->postJson('/api/v1/projects', ['title' => 'Some Project'])
+            ->assertNotFound();
     }
 
     public function test_title_is_sanitized_on_create(): void
@@ -190,11 +212,9 @@ class ProjectTest extends TestCase
         $user = $this->professionalUser();
         Portfolio::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->actingAs($user)->postJson('/api/v1/projects', [
-            'title' => '<b>My Project</b>',
-        ]);
+        $this->actingAs($user)->postJson('/api/v1/projects', ['title' => '<b>My Project</b>'])
+            ->assertCreated();
 
-        $response->assertCreated();
         $this->assertDatabaseHas('projects', ['title' => 'My Project']);
     }
 
@@ -206,15 +226,17 @@ class ProjectTest extends TestCase
     {
         $user = $this->professionalUser();
         $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
-        $project = Project::factory()->create(['portfolio_id' => $portfolio->id]);
+        $project  = Project::factory()->create(['portfolio_id' => $portfolio->id]);
+        $category = ProjectCategory::factory()->create(['name' => 'DevOps']);
 
         $response = $this->actingAs($user)->putJson("/api/v1/projects/{$project->id}", [
             'title'       => 'Updated Title',
-            'description' => 'Updated description.',
+            'category_id' => $category->id,
         ]);
 
         $response->assertOk()
-            ->assertJsonPath('data.title', 'Updated Title');
+            ->assertJsonPath('data.title', 'Updated Title')
+            ->assertJsonPath('data.category.name', 'DevOps');
 
         $this->assertDatabaseHas('projects', ['id' => $project->id, 'title' => 'Updated Title']);
     }
@@ -223,9 +245,9 @@ class ProjectTest extends TestCase
     {
         $user = $this->professionalUser();
         $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
-        $project = Project::factory()->create(['portfolio_id' => $portfolio->id]);
+        $project  = Project::factory()->create(['portfolio_id' => $portfolio->id]);
 
-        $old = Skill::factory()->create(['name' => 'Vue', 'type' => 'tecnica', 'category' => 'Frameworks']);
+        $old = Skill::factory()->create(['name' => 'Vue',   'type' => 'tecnica', 'category' => 'Frameworks']);
         $new = Skill::factory()->create(['name' => 'React', 'type' => 'tecnica', 'category' => 'Frameworks']);
         $project->skills()->sync([$old->id]);
 
@@ -244,18 +266,15 @@ class ProjectTest extends TestCase
 
     public function test_user_cannot_update_another_users_project(): void
     {
-        $owner = $this->professionalUser();
+        $owner   = $this->professionalUser();
         $portfolio = Portfolio::factory()->create(['user_id' => $owner->id]);
-        $project = Project::factory()->create(['portfolio_id' => $portfolio->id]);
+        $project  = Project::factory()->create(['portfolio_id' => $portfolio->id]);
 
         $attacker = $this->professionalUser();
         Portfolio::factory()->create(['user_id' => $attacker->id]);
 
-        $response = $this->actingAs($attacker)->putJson("/api/v1/projects/{$project->id}", [
-            'title' => 'Hacked',
-        ]);
-
-        $response->assertNotFound();
+        $this->actingAs($attacker)->putJson("/api/v1/projects/{$project->id}", ['title' => 'Hacked'])
+            ->assertNotFound();
     }
 
     // -------------------------------------------------------------------------
@@ -266,14 +285,12 @@ class ProjectTest extends TestCase
     {
         $user = $this->professionalUser();
         $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
-        $project = Project::factory()->create(['portfolio_id' => $portfolio->id]);
+        $project  = Project::factory()->create(['portfolio_id' => $portfolio->id]);
 
-        $response = $this->actingAs($user)->deleteJson("/api/v1/projects/{$project->id}");
-
-        $response->assertOk()
+        $this->actingAs($user)->deleteJson("/api/v1/projects/{$project->id}")
+            ->assertOk()
             ->assertJsonPath('message', 'Project archived successfully.');
 
-        // Row still exists but is archived
         $this->assertDatabaseHas('projects', ['id' => $project->id, 'archived' => true]);
     }
 
@@ -281,26 +298,27 @@ class ProjectTest extends TestCase
     {
         $user = $this->professionalUser();
         $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
-        $project = Project::factory()->create(['portfolio_id' => $portfolio->id]);
+        $project  = Project::factory()->create(['portfolio_id' => $portfolio->id]);
 
         $this->actingAs($user)->deleteJson("/api/v1/projects/{$project->id}");
 
-        $response = $this->actingAs($user)->getJson('/api/v1/projects');
-        $response->assertOk()->assertJsonCount(0, 'data');
+        $this->actingAs($user)->getJson('/api/v1/projects')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
     }
 
     public function test_user_cannot_archive_another_users_project(): void
     {
-        $owner = $this->professionalUser();
+        $owner   = $this->professionalUser();
         $portfolio = Portfolio::factory()->create(['user_id' => $owner->id]);
-        $project = Project::factory()->create(['portfolio_id' => $portfolio->id]);
+        $project  = Project::factory()->create(['portfolio_id' => $portfolio->id]);
 
         $attacker = $this->professionalUser();
         Portfolio::factory()->create(['user_id' => $attacker->id]);
 
-        $response = $this->actingAs($attacker)->deleteJson("/api/v1/projects/{$project->id}");
+        $this->actingAs($attacker)->deleteJson("/api/v1/projects/{$project->id}")
+            ->assertNotFound();
 
-        $response->assertNotFound();
         $this->assertDatabaseHas('projects', ['id' => $project->id, 'archived' => false]);
     }
 
@@ -308,7 +326,7 @@ class ProjectTest extends TestCase
     {
         $user = $this->professionalUser();
         $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
-        $project = Project::factory()->create(['portfolio_id' => $portfolio->id]);
+        $project  = Project::factory()->create(['portfolio_id' => $portfolio->id]);
 
         $this->deleteJson("/api/v1/projects/{$project->id}")->assertUnauthorized();
     }

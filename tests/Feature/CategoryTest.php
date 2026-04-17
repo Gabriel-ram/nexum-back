@@ -2,60 +2,76 @@
 
 namespace Tests\Feature;
 
-use App\Models\Skill;
+use App\Models\ProjectCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-/**
- * La tabla categories fue eliminada. Su contenido pasó a la tabla skills
- * como type = 'project_category'. Estos tests cubren el endpoint de catálogo
- * de skills para proyectos: GET /api/v1/projects/skills
- */
 class CategoryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_authenticated_user_can_get_project_skills_catalog(): void
+    private function adminUser(): User
     {
+        Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $user = User::factory()->create();
-        Skill::factory()->create(['type' => 'tecnica', 'category' => 'Frameworks & Librerías']);
-        Skill::factory()->create(['type' => 'project_category', 'category' => 'Categoría de Proyecto']);
-
-        $response = $this->actingAs($user)->getJson('/api/v1/projects/skills');
-
-        $response->assertOk()
-            ->assertJsonStructure(['data']);
+        $user->assignRole('admin');
+        return $user;
     }
 
-    public function test_unauthenticated_user_cannot_get_project_skills_catalog(): void
+    // -------------------------------------------------------------------------
+    // POST /api/v1/admin/project-categories
+    // -------------------------------------------------------------------------
+
+    public function test_admin_can_create_project_category(): void
     {
-        $this->getJson('/api/v1/projects/skills')->assertUnauthorized();
+        $admin = $this->adminUser();
+
+        $response = $this->actingAs($admin)->postJson('/api/v1/admin/project-categories', [
+            'name' => 'Blockchain',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.name', 'Blockchain');
+
+        $this->assertDatabaseHas('project_categories', ['name' => 'Blockchain']);
     }
 
-    public function test_catalog_excludes_soft_skills(): void
+    public function test_admin_cannot_create_duplicate_category(): void
     {
-        $user = User::factory()->create();
-        Skill::factory()->create(['name' => 'Trabajo en equipo', 'type' => 'blanda', 'category' => 'Colaboración']);
-        Skill::factory()->create(['name' => 'Laravel', 'type' => 'tecnica', 'category' => 'Frameworks']);
+        $admin = $this->adminUser();
+        ProjectCategory::factory()->create(['name' => 'Web Development']);
 
-        $response = $this->actingAs($user)->getJson('/api/v1/projects/skills');
-
-        $response->assertOk();
-        $this->assertArrayNotHasKey('blanda', $response->json('data'));
-        $this->assertArrayHasKey('tecnica', $response->json('data'));
+        $this->actingAs($admin)->postJson('/api/v1/admin/project-categories', [
+            'name' => 'Web Development',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['name']);
     }
 
-    public function test_catalog_includes_project_categories(): void
+    public function test_category_name_is_sanitized(): void
+    {
+        $admin = $this->adminUser();
+
+        $this->actingAs($admin)->postJson('/api/v1/admin/project-categories', [
+            'name' => '<b>Blockchain</b>',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('project_categories', ['name' => 'Blockchain']);
+    }
+
+    public function test_regular_user_cannot_create_project_category(): void
     {
         $user = User::factory()->create();
-        Skill::factory()->create(['name' => 'Web Development', 'type' => 'project_category', 'category' => 'Categoría de Proyecto']);
-        Skill::factory()->create(['name' => 'Mobile Development', 'type' => 'project_category', 'category' => 'Categoría de Proyecto']);
 
-        $response = $this->actingAs($user)->getJson('/api/v1/projects/skills');
+        $this->actingAs($user)->postJson('/api/v1/admin/project-categories', [
+            'name' => 'Blockchain',
+        ])->assertForbidden();
+    }
 
-        $response->assertOk();
-        $this->assertArrayHasKey('project_category', $response->json('data'));
-        $this->assertCount(2, $response->json('data.project_category.Categoría de Proyecto'));
+    public function test_unauthenticated_user_cannot_create_project_category(): void
+    {
+        $this->postJson('/api/v1/admin/project-categories', [
+            'name' => 'Blockchain',
+        ])->assertUnauthorized();
     }
 }

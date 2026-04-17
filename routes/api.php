@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CertificationController;
 use App\Http\Controllers\Api\V1\FeaturedProfilesController;
+use App\Http\Controllers\Api\V1\ProjectCategoryController;
 use App\Http\Controllers\Api\V1\SkillController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -53,6 +54,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/skills/categories', [AdminSkillController::class, 'categories']);
         Route::get('/skills', [AdminSkillController::class, 'index']);
         Route::post('/skills', [AdminSkillController::class, 'store']);
+
+        // Gestión de categorías de proyecto
+        Route::post('/project-categories', [ProjectCategoryController::class, 'store']);
     });
 
     // HU-7 + HU-8: Portfolio del usuario autenticado
@@ -85,7 +89,10 @@ Route::prefix('v1')->group(function () {
         // Catálogo de skills del portfolio (para agregar habilidades al perfil)
         Route::get('/skills/catalog', [SkillController::class, 'catalog']);
 
-        // Catálogo de skills para proyectos (tecnologías + categorías de proyecto)
+        // Categorías de proyecto (lista pública para usuarios autenticados)
+        Route::get('/project-categories', [ProjectCategoryController::class, 'index']);
+
+        // Skills técnicas disponibles para asociar a proyectos
         // Debe ir antes de /projects/{project} para que 'skills' no se tome como ID
         Route::get('/projects/skills', [ProjectController::class, 'skillsCatalog']);
 
