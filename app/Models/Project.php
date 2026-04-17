@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -48,5 +49,10 @@ class Project extends Model
     public function skills(): BelongsToMany
     {
         return $this->belongsToMany(Skill::class, 'project_skills');
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(ProjectFile::class)->orderBy('order')->orderBy('id');
     }
 }

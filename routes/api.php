@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CertificationController;
 use App\Http\Controllers\Api\V1\FeaturedProfilesController;
 use App\Http\Controllers\Api\V1\ProjectCategoryController;
+use App\Http\Controllers\Api\V1\ProjectFileController;
 use App\Http\Controllers\Api\V1\SkillController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -100,6 +101,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/projects', [ProjectController::class, 'store']);
         Route::put('/projects/{project}', [ProjectController::class, 'update']);
         Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+
+        // Archivos (imágenes y PDFs) de un proyecto
+        Route::get('/projects/{project}/files', [ProjectFileController::class, 'index']);
+        Route::post('/projects/{project}/files', [ProjectFileController::class, 'store']);
+        Route::delete('/projects/{project}/files/{file}', [ProjectFileController::class, 'destroy']);
     });
 
 });

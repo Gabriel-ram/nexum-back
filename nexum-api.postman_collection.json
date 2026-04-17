@@ -10,6 +10,7 @@
     { "key": "token",              "value": "", "type": "string" },
     { "key": "admin_token",        "value": "", "type": "string" },
     { "key": "project_id",         "value": "", "type": "string" },
+    { "key": "project_file_id",    "value": "", "type": "string" },
     { "key": "certification_id",   "value": "", "type": "string" },
     { "key": "portfolio_skill_id", "value": "", "type": "string" }
   ],
@@ -252,7 +253,7 @@
     },
     {
       "name": "Proyectos",
-      "description": "CRUD de proyectos del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener portfolio creado.\n\nFLUJO RECOMENDADO PARA EL MODAL:\n1. GET /project-categories → obtén las categorías disponibles\n2. GET /projects/skills    → obtén las tecnologías disponibles\n3. POST /projects          → crea el proyecto con los IDs obtenidos\n\nNOTA: El DELETE archiva el proyecto (soft delete). No lo elimina físicamente. Los proyectos archivados no aparecen en GET /projects.",
+      "description": "CRUD de proyectos del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener portfolio creado.\n\nFLUJO RECOMENDADO PARA EL MODAL:\n1. GET /project-categories → obtén las categorías disponibles\n2. GET /projects/skills    → obtén las tecnologías disponibles\n3. POST /projects          → crea el proyecto con los IDs obtenidos\n4. POST /projects/{id}/files → sube imágenes y/o PDFs del proyecto\n\nARCHIVOS:\n- Máx 10 archivos por proyecto (imágenes + PDFs combinados)\n- Tipos aceptados: jpg, jpeg, png, webp, pdf\n- Tamaño máximo: 10MB por archivo\n- Los archivos se almacenan en Cloudinary\n\nNOTA: El DELETE archiva el proyecto (soft delete). No lo elimina físicamente. Los proyectos archivados no aparecen en GET /projects.",
       "item": [
         {
           "name": "Listar Proyectos",
@@ -359,6 +360,76 @@
               "path": ["api","v1","projects","{{project_id}}"]
             },
             "description": "Archiva el proyecto (soft delete). El registro NO se elimina de la base de datos — solo se marca como archived=true y deja de aparecer en GET /projects.\n\nDevuelve 404 si el proyecto no pertenece al usuario autenticado."
+          }
+        },
+        {
+          "name": "Listar Archivos del Proyecto",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/files",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","projects","{{project_id}}","files"]
+            },
+            "description": "Devuelve todos los archivos (imágenes y PDFs) del proyecto, ordenados por 'order' e 'id'.\n\nCada archivo incluye:\n- id\n- type: 'image' | 'pdf'\n- url: URL pública de Cloudinary (acceso directo)\n- original_name: nombre original del archivo (útil para PDFs)\n- order: posición del archivo\n\nNOTA: Los archivos también vienen incluidos en GET /projects, POST /projects y PUT /projects/{id} dentro del campo 'files'."
+          }
+        },
+        {
+          "name": "Subir Archivos al Proyecto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data[0] && json.data[0].id) {",
+                  "  pm.collectionVariables.set('project_file_id', json.data[0].id);",
+                  "  console.log('project_file_id guardado: ' + json.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/files",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","projects","{{project_id}}","files"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "files[]", "type": "file", "description": "Imagen (jpg, jpeg, png, webp) o PDF. Máx 10MB. Puedes agregar varias filas con el mismo key 'files[]' para subir múltiples archivos a la vez." },
+                { "key": "files[]", "type": "file", "description": "Segundo archivo (opcional). Repite el campo para subir más de uno." }
+              ]
+            },
+            "description": "Sube uno o más archivos al proyecto. Usa multipart/form-data con el campo 'files[]'.\n\nIMPORTANTE: NO agregar Content-Type manualmente — Postman lo gestiona con el boundary correcto.\n\nValidaciones:\n- files[]: obligatorio, array\n- Cada archivo: jpg, jpeg, png, webp o pdf — máx 10MB\n- Límite total: 10 archivos por proyecto (entre imágenes y PDFs)\n\nRespuesta 201 con los archivos recién creados. El ID del primer archivo se guarda en {{project_file_id}}.\n\nErrores:\n- 422 si se supera el límite de 10 archivos\n- 422 si el tipo de archivo no es válido"
+          }
+        },
+        {
+          "name": "Eliminar Archivo del Proyecto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/files/{{project_file_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","projects","{{project_id}}","files","{{project_file_id}}"]
+            },
+            "description": "Elimina el archivo del proyecto y lo borra permanentemente de Cloudinary.\n\nDevuelve 404 si:\n- El proyecto no pertenece al usuario autenticado\n- El archivo no pertenece al proyecto indicado"
           }
         }
       ]

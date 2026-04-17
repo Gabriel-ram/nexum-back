@@ -25,6 +25,7 @@ class ProjectResource extends JsonResource
                 'type'     => $skill->type,
                 'category' => $skill->category,
             ])),
+            'files'       => ProjectFileResource::collection($this->whenLoaded('files')),
             'created_at'  => $this->created_at->toISOString(),
             'updated_at'  => $this->updated_at->toISOString(),
         ];

@@ -41,6 +41,62 @@ class CloudinaryService
     }
 
     /**
+     * Upload a project image to Cloudinary.
+     *
+     * @return array{url: string, public_id: string}
+     */
+    public function uploadProjectImage(UploadedFile $file): array
+    {
+        $result = $this->uploadApi()->upload($file->getRealPath(), [
+            'folder' => 'nexum/projects/images',
+        ]);
+
+        return [
+            'url'       => $result['secure_url'],
+            'public_id' => $result['public_id'],
+            'size'      => $result['bytes'],
+        ];
+    }
+
+    /**
+     * Upload a project PDF to Cloudinary.
+     * Uses resource_type 'raw' so Cloudinary treats it as a generic file.
+     *
+     * @return array{url: string, public_id: string, size: int}
+     */
+    public function uploadProjectPdf(UploadedFile $file): array
+    {
+        $result = $this->uploadApi()->upload($file->getRealPath(), [
+            'folder'        => 'nexum/projects/pdfs',
+            'resource_type' => 'raw',
+        ]);
+
+        return [
+            'url'       => $result['secure_url'],
+            'public_id' => $result['public_id'],
+            'size'      => $result['bytes'],
+        ];
+    }
+
+    /**
+     * Delete a project file from Cloudinary.
+     * For PDFs the resource_type must be 'raw'; for images it is 'image' (default).
+     */
+    public function deleteProjectFile(?string $publicId, string $type): void
+    {
+        if (! $publicId) {
+            return;
+        }
+
+        try {
+            $resourceType = $type === 'pdf' ? 'raw' : 'image';
+            $this->uploadApi()->destroy($publicId, ['resource_type' => $resourceType]);
+        } catch (\Throwable) {
+            // Silent — a failed cleanup must not fail the HTTP request
+        }
+    }
+
+    /**
      * Delete a certification image from Cloudinary.
      * Silently ignores failures and null public IDs.
      */

@@ -108,7 +108,7 @@ class CertificationController extends Controller
         }
 
         $request->validate([
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         $this->cloudinary->deleteCertificationImage($certification->cloudinary_public_id);

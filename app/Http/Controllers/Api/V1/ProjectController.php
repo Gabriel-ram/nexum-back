@@ -27,7 +27,7 @@ class ProjectController extends Controller
 
         $projects = $portfolio->projects()
             ->where('archived', false)
-            ->with(['category', 'skills'])
+            ->with(['category', 'skills', 'files'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -55,7 +55,7 @@ class ProjectController extends Controller
             $project->skills()->sync($skillIds);
         }
 
-        return (new ProjectResource($project->refresh()->load(['category', 'skills'])))->response()->setStatusCode(201);
+        return (new ProjectResource($project->refresh()->load(['category', 'skills', 'files'])))->response()->setStatusCode(201);
     }
 
     /**
@@ -79,7 +79,7 @@ class ProjectController extends Controller
             $project->skills()->sync($skillIds);
         }
 
-        return new ProjectResource($project->load(['category', 'skills']));
+        return new ProjectResource($project->load(['category', 'skills', 'files']));
     }
 
     /**
