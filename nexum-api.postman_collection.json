@@ -1,51 +1,30 @@
 {
   "info": {
-    "name": "Nexum API — Sprint 1",
-    "_postman_id": "nexum-api-sprint1",
-    "description": "Colección completa de endpoints del backend Nexum. Usá la variable {{base_url}} = http://127.0.0.1:8000. Tras hacer login, copiá el token en la variable {{token}}.",
+    "name": "Nexum API",
+    "_postman_id": "nexum-api-v2",
+    "description": "Colección completa de endpoints del backend Nexum.\n\n**Setup:**\n1. Importa esta colección\n2. Ajusta {{base_url}} si es necesario (default: http://127.0.0.1:8000)\n3. Ejecuta Login (profesional o admin) — el token se guarda automáticamente\n4. Ya puedes usar cualquier endpoint protegido\n\n**Variables de colección:**\n- {{base_url}} — URL base del servidor\n- {{token}} — token del usuario profesional (se guarda automáticamente al hacer login)\n- {{admin_token}} — token del admin (se guarda automáticamente al hacer login como admin)\n- {{project_id}} — ID del último proyecto creado (se guarda automáticamente)\n- {{certification_id}} — ID de la última certificación creada\n- {{portfolio_skill_id}} — ID del último portfolio_skill creado\n\n**Usuarios seeded (después de migrate:fresh --seed):**\n- Admin: admin@portfolio.test / Password123!\n- Ana García (Full Stack Dev): ana.garcia@portfolio.test / Password123!\n- Carlos Méndez (UX Designer): carlos.mendez@portfolio.test / Password123!\n- Sofía Romero (Data Scientist): sofia.romero@portfolio.test / Password123!",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "base_url",
-      "value": "http://127.0.0.1:8000",
-      "type": "string"
-    },
-    {
-      "key": "token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "project_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "certification_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "portfolio_skill_id",
-      "value": "",
-      "type": "string"
-    }
+    { "key": "base_url",           "value": "http://127.0.0.1:8000", "type": "string" },
+    { "key": "token",              "value": "", "type": "string" },
+    { "key": "admin_token",        "value": "", "type": "string" },
+    { "key": "project_id",         "value": "", "type": "string" },
+    { "key": "certification_id",   "value": "", "type": "string" },
+    { "key": "portfolio_skill_id", "value": "", "type": "string" }
   ],
   "item": [
     {
       "name": "Public",
-      "description": "Endpoints públicos que no requieren autenticación.",
+      "description": "Endpoints públicos — no requieren autenticación.",
       "item": [
         {
           "name": "Featured Profiles",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": { "raw": "{{base_url}}/api/v1/featured-profiles", "host": ["{{base_url}}"], "path": ["api", "v1", "featured-profiles"] },
-            "description": "Devuelve los 3 perfiles profesionales destacados para la landing page y las estadísticas globales del sistema. No requiere autenticación.\n\nEstructura de respuesta:\n- data: array de 3 perfiles (first_name, last_name, location, avatar_url, projects_count)\n- stats.total_users: total de usuarios activos en el sistema\n- stats.total_projects: total de proyectos publicados en el sistema"
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/v1/featured-profiles", "host": ["{{base_url}}"], "path": ["api","v1","featured-profiles"] },
+            "description": "3 perfiles destacados para la landing page + estadísticas globales (total_users, total_projects). No requiere autenticación."
           }
         }
       ]
@@ -60,38 +39,36 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
+              { "key": "Accept",       "value": "application/json" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/auth/register", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "register"] },
+            "url": { "raw": "{{base_url}}/api/v1/auth/register", "host": ["{{base_url}}"], "path": ["api","v1","auth","register"] },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Pérez\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"Password123!\",\n  \"password_confirmation\": \"Password123!\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Crea un nuevo usuario con rol 'professional' y envía un email de verificación en cola. Devuelve 201."
+            "description": "Crea un usuario con rol 'professional'. Envía email de verificación en cola (requiere queue worker corriendo). Devuelve 201."
           }
         },
         {
           "name": "Verificar Email",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/v1/auth/email/verify/:id/:hash?expires=:expires&signature=:signature",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "email", "verify", ":id", ":hash"],
+              "path": ["api","v1","auth","email","verify",":id",":hash"],
               "variable": [
-                { "key": "id", "value": "1" },
+                { "key": "id",   "value": "1" },
                 { "key": "hash", "value": "abc123" }
               ],
               "query": [
-                { "key": "expires", "value": "1234567890" },
+                { "key": "expires",   "value": "1234567890" },
                 { "key": "signature", "value": "firma_generada_por_laravel" }
               ]
             },
-            "description": "Verifica el email usando el link firmado recibido por correo."
+            "description": "Verifica el email usando el link firmado recibido por correo. Copiar la URL completa del email."
           }
         },
         {
@@ -100,9 +77,9 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
+              { "key": "Accept",       "value": "application/json" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/auth/email/resend", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "email", "resend"] },
+            "url": { "raw": "{{base_url}}/api/v1/auth/email/resend", "host": ["{{base_url}}"], "path": ["api","v1","auth","email","resend"] },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"juan.perez@example.com\"\n}",
@@ -111,7 +88,7 @@
           }
         },
         {
-          "name": "Login",
+          "name": "Login (Profesional)",
           "event": [
             {
               "listen": "test",
@@ -120,7 +97,7 @@
                   "var json = pm.response.json();",
                   "if (json.token) {",
                   "  pm.collectionVariables.set('token', json.token);",
-                  "  console.log('Token guardado automáticamente.');",
+                  "  console.log('Token profesional guardado.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -131,15 +108,47 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
+              { "key": "Accept",       "value": "application/json" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "login"] },
+            "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api","v1","auth","login"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"professional1@nexun.com\",\n  \"password\": \"Admin1234!\"\n}",
+              "raw": "{\n  \"email\": \"ana.garcia@portfolio.test\",\n  \"password\": \"Password123!\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Autentica al usuario. El script de Tests guarda el token en {{token}} automáticamente."
+            "description": "Autentica como profesional. El token se guarda automáticamente en {{token}}.\n\nUsuarios seeded:\n- ana.garcia@portfolio.test (Full Stack Developer)\n- carlos.mendez@portfolio.test (UX Designer)\n- sofia.romero@portfolio.test (Data Scientist)"
+          }
+        },
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('admin_token', json.token);",
+                  "  console.log('Token admin guardado.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api","v1","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@portfolio.test\",\n  \"password\": \"Password123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Autentica como admin. El token se guarda en {{admin_token}}. Úsalo en los endpoints de la carpeta Admin."
           }
         },
         {
@@ -147,10 +156,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/auth/logout", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "logout"] },
+            "url": { "raw": "{{base_url}}/api/v1/auth/logout", "host": ["{{base_url}}"], "path": ["api","v1","auth","logout"] },
             "body": { "mode": "none" }
           }
         },
@@ -160,9 +169,9 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
+              { "key": "Accept",       "value": "application/json" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/auth/forgot-password", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "forgot-password"] },
+            "url": { "raw": "{{base_url}}/api/v1/auth/forgot-password", "host": ["{{base_url}}"], "path": ["api","v1","auth","forgot-password"] },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"juan.perez@example.com\"\n}",
@@ -176,9 +185,9 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
+              { "key": "Accept",       "value": "application/json" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/auth/reset-password", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "reset-password"] },
+            "url": { "raw": "{{base_url}}/api/v1/auth/reset-password", "host": ["{{base_url}}"], "path": ["api","v1","auth","reset-password"] },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"token\": \"token_del_email_de_reset\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"NuevaPassword123!\",\n  \"password_confirmation\": \"NuevaPassword123!\"\n}",
@@ -190,17 +199,17 @@
     },
     {
       "name": "Portfolio",
-      "description": "Gestión del portfolio del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}}.",
+      "description": "Gestión del portfolio del usuario autenticado. Requiere Bearer {{token}}.",
       "item": [
         {
           "name": "Ver Portfolio",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/portfolio", "host": ["{{base_url}}"], "path": ["api", "v1", "portfolio"] },
+            "url": { "raw": "{{base_url}}/api/v1/portfolio", "host": ["{{base_url}}"], "path": ["api","v1","portfolio"] },
             "description": "Devuelve el portfolio del usuario autenticado. Devuelve 404 si aún no tiene portfolio."
           }
         },
@@ -210,16 +219,16 @@
             "method": "PUT",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/portfolio", "host": ["{{base_url}}"], "path": ["api", "v1", "portfolio"] },
+            "url": { "raw": "{{base_url}}/api/v1/portfolio", "host": ["{{base_url}}"], "path": ["api","v1","portfolio"] },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"García\",\n  \"profession\": \"Full Stack Developer\",\n  \"biography\": \"Desarrollador con experiencia en Laravel y Vue.js.\",\n  \"phone\": \"+34 600 000 000\",\n  \"location\": \"Madrid, España\",\n  \"linkedin_url\": \"https://www.linkedin.com/in/mi-perfil\",\n  \"github_url\": \"https://github.com/mi-usuario\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Crea o actualiza el portfolio (updateOrCreate). IMPORTANTE: este endpoint debe ejecutarse antes de crear proyectos, ya que los proyectos requieren que exista un portfolio."
+            "description": "Crea o actualiza el portfolio (updateOrCreate). Debe ejecutarse antes de crear proyectos o certificaciones."
           }
         },
         {
@@ -227,14 +236,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/portfolio/avatar", "host": ["{{base_url}}"], "path": ["api", "v1", "portfolio", "avatar"] },
+            "url": { "raw": "{{base_url}}/api/v1/portfolio/avatar", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","avatar"] },
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "avatar", "type": "file", "description": "jpg, jpeg, png o webp. Máximo 2MB." }
+                { "key": "avatar", "type": "file", "description": "jpg, jpeg, png o webp. Máx 2MB." }
               ]
             }
           }
@@ -242,62 +251,43 @@
       ]
     },
     {
-      "name": "Proyectos (HU-9)",
-      "description": "CRUD de proyectos del portfolio del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener un portfolio creado (usar 'Crear / Actualizar Portfolio' primero).\n\nCampos disponibles:\n- title (obligatorio): nombre del proyecto\n- description (opcional): descripción detallada\n- project_url (opcional): URL del proyecto/repositorio\n- technologies (opcional): array de strings con las tecnologías usadas\n- category_id (opcional): ID de categoría obtenido de GET /categories",
+      "name": "Proyectos",
+      "description": "CRUD de proyectos del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener portfolio creado.\n\nFLUJO RECOMENDADO PARA EL MODAL:\n1. GET /project-categories → obtén las categorías disponibles\n2. GET /projects/skills    → obtén las tecnologías disponibles\n3. POST /projects          → crea el proyecto con los IDs obtenidos\n\nNOTA: El DELETE archiva el proyecto (soft delete). No lo elimina físicamente. Los proyectos archivados no aparecen en GET /projects.",
       "item": [
         {
           "name": "Listar Proyectos",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/projects",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects"]
-            },
-            "description": "Devuelve todos los proyectos del usuario autenticado. Devuelve lista vacía si no tiene portfolio o proyectos."
+            "url": { "raw": "{{base_url}}/api/v1/projects", "host": ["{{base_url}}"], "path": ["api","v1","projects"] },
+            "description": "Devuelve todos los proyectos activos (no archivados) del usuario, ordenados de más reciente a más antiguo. Incluye category y skills cargados.\n\nEl filtrado por categoría y el ordenamiento adicional se hacen en el frontend — el volumen por usuario es acotado y no requiere paginación."
           }
         },
         {
-          "name": "Listar Proyectos (filtrado por categoría)",
+          "name": "Catálogo — Categorías de Proyecto",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/projects?category_id=1",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects"],
-              "query": [
-                { "key": "category_id", "value": "1", "description": "Filtrar por ID de categoría (opcional)" }
-              ]
-            },
-            "description": "Filtra los proyectos por categoría. Reemplaza el valor de category_id por el ID obtenido de GET /categories."
+            "url": { "raw": "{{base_url}}/api/v1/project-categories", "host": ["{{base_url}}"], "path": ["api","v1","project-categories"] },
+            "description": "Lista todas las categorías de proyecto disponibles, ordenadas alfabéticamente.\n\nÚsalas para:\n- Poblar el selector de categoría en el modal de crear/editar proyecto\n- Renderizar los botones de filtro en la vista de proyectos\n\nCategorías seeded: Web Development, Mobile Development, Data Science, DevOps, UI/UX Design, Machine Learning, Cybersecurity, Open Source, Other"
           }
         },
         {
-          "name": "Listar Proyectos (ordenado)",
+          "name": "Catálogo — Skills Técnicas para Proyectos",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/projects?sort_by=title&sort_dir=asc",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects"],
-              "query": [
-                { "key": "sort_by", "value": "title", "description": "Campo de orden: title o created_at (default: created_at)" },
-                { "key": "sort_dir", "value": "asc", "description": "Dirección: asc o desc (default: desc)" }
-              ]
-            },
-            "description": "Ordena los proyectos por título o fecha. sort_by acepta 'title' o 'created_at'. sort_dir acepta 'asc' o 'desc'."
+            "url": { "raw": "{{base_url}}/api/v1/projects/skills", "host": ["{{base_url}}"], "path": ["api","v1","projects","skills"] },
+            "description": "Devuelve el catálogo de skills técnicas disponibles para asociar a proyectos, agrupadas por categoría.\n\nSolo incluye skills de type='tecnica' (excluye habilidades blandas).\n\nEstructura de respuesta:\n{\n  \"data\": {\n    \"Lenguajes de Programación\": [ { id, name, type, category }, ... ],\n    \"Frameworks & Librerías\": [ ... ],\n    \"Bases de Datos\": [ ... ],\n    \"Cloud & DevOps\": [ ... ],\n    \"Herramientas & Plataformas\": [ ... ]\n  }\n}"
           }
         },
         {
@@ -321,16 +311,16 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
             ],
-            "url": { "raw": "{{base_url}}/api/v1/projects", "host": ["{{base_url}}"], "path": ["api", "v1", "projects"] },
+            "url": { "raw": "{{base_url}}/api/v1/projects", "host": ["{{base_url}}"], "path": ["api","v1","projects"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Mi Portfolio App\",\n  \"description\": \"Aplicación full-stack para gestionar mi portfolio profesional.\",\n  \"project_url\": \"https://github.com/mi-usuario/portfolio-app\",\n  \"technologies\": [\"Laravel\", \"Vue.js\", \"PostgreSQL\", \"Tailwind CSS\"],\n  \"category_id\": null\n}",
+              "raw": "{\n  \"title\": \"Mi Portfolio App\",\n  \"description\": \"Aplicación full-stack para gestionar mi portfolio profesional.\",\n  \"project_url\": \"https://github.com/mi-usuario/portfolio-app\",\n  \"category_id\": 1,\n  \"skill_ids\": [1, 18, 7]\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Crea un nuevo proyecto. El script de Tests guarda el ID en {{project_id}} automáticamente para usarlo en editar/eliminar.\n\nValidaciones:\n- title: obligatorio, máx 255 caracteres\n- description: opcional, máx 5000 caracteres\n- project_url: opcional, debe ser URL válida\n- technologies: opcional, array de strings (máx 20 items, cada uno máx 50 chars)\n- category_id: opcional, debe existir en la tabla categories\n\nDevuelve 404 si el usuario no tiene portfolio creado."
+            "description": "Crea un nuevo proyecto. El project_id se guarda automáticamente en {{project_id}}.\n\nValidaciones:\n- title: obligatorio, máx 255 chars (se aplica strip_tags)\n- description: opcional, máx 5000 chars\n- project_url: opcional, URL válida\n- category_id: opcional, debe existir en project_categories\n- skill_ids: opcional, array de IDs (máx 30), cada uno debe existir en skills\n\nDevuelve 404 si el usuario no tiene portfolio."
           }
         },
         {
@@ -339,76 +329,53 @@
             "method": "PUT",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/projects/{{project_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects", "{{project_id}}"]
+              "path": ["api","v1","projects","{{project_id}}"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Mi Portfolio App v2\",\n  \"description\": \"Versión mejorada con nuevas funcionalidades.\",\n  \"project_url\": \"https://github.com/mi-usuario/portfolio-app\",\n  \"technologies\": [\"Laravel\", \"Vue.js\", \"PostgreSQL\", \"Docker\"],\n  \"category_id\": null\n}",
+              "raw": "{\n  \"title\": \"Mi Portfolio App v2\",\n  \"description\": \"Versión mejorada con nuevas funcionalidades.\",\n  \"project_url\": \"https://github.com/mi-usuario/portfolio-app\",\n  \"category_id\": 1,\n  \"skill_ids\": [1, 18, 7, 22]\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Actualiza un proyecto existente. Usa {{project_id}} guardado al crear. Solo puede editar proyectos propios — devuelve 404 si el proyecto pertenece a otro usuario."
+            "description": "Actualiza el proyecto. Mismas validaciones que POST.\n\nIMPORTANTE sobre skill_ids:\n- Si se envía skill_ids, REEMPLAZA por completo las skills del proyecto (sync)\n- Si NO se envía skill_ids, las skills no cambian\n- Para dejar el proyecto sin skills: enviar skill_ids: []\n\nDevuelve 404 si el proyecto no pertenece al usuario autenticado."
           }
         },
         {
-          "name": "Eliminar Proyecto",
+          "name": "Archivar Proyecto",
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/projects/{{project_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects", "{{project_id}}"]
+              "path": ["api","v1","projects","{{project_id}}"]
             },
-            "description": "Elimina un proyecto. Solo puede eliminar proyectos propios — devuelve 404 si el proyecto pertenece a otro usuario. Devuelve 200 con mensaje de confirmación."
+            "description": "Archiva el proyecto (soft delete). El registro NO se elimina de la base de datos — solo se marca como archived=true y deja de aparecer en GET /projects.\n\nDevuelve 404 si el proyecto no pertenece al usuario autenticado."
           }
         }
       ]
     },
     {
-      "name": "Categorías (HU-10)",
-      "description": "Listado de categorías disponibles para clasificar proyectos. Requiere autenticación.",
-      "item": [
-        {
-          "name": "Listar Categorías",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "url": { "raw": "{{base_url}}/api/v1/categories", "host": ["{{base_url}}"], "path": ["api", "v1", "categories"] },
-            "description": "Devuelve todas las categorías disponibles ordenadas por nombre. Úsalas para obtener el category_id al crear/editar proyectos.\n\nCategorías seeded:\n- Web Development\n- Mobile Development\n- Data Science\n- DevOps\n- UI/UX Design\n- Machine Learning\n- Cybersecurity\n- Open Source\n- Other"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Certificaciones ",
-      "description": "Gestión de certificaciones del portfolio del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener un portfolio creado (usar 'Crear / Actualizar Portfolio' primero).\n\nFechas en formato m/Y (ej: 04/2026). Las certificaciones nunca se eliminan físicamente — DELETE desactiva (is_active = false), PATCH restore reactiva.",
+      "name": "Certificaciones",
+      "description": "Gestión de certificaciones del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener portfolio creado.\n\nFechas en formato m/Y (ej: 04/2026).\nDELETE desactiva (is_active = false). PATCH restore reactiva.",
       "item": [
         {
           "name": "Listar Certificaciones (activas)",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/portfolio/certifications",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "certifications"]
-            },
-            "description": "Devuelve las certificaciones activas del usuario autenticado, ordenadas por issue_date descendente. Lista vacía si no tiene portfolio o certificaciones activas."
+            "url": { "raw": "{{base_url}}/api/v1/portfolio/certifications", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","certifications"] }
           }
         },
         {
@@ -416,18 +383,15 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/portfolio/certifications?include_inactive=true",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "certifications"],
-              "query": [
-                { "key": "include_inactive", "value": "true", "description": "Incluye certificaciones desactivadas (is_active = false). Útil para ver cuáles se pueden restaurar." }
-              ]
-            },
-            "description": "Devuelve todas las certificaciones del usuario, activas e inactivas. Usalo para obtener el ID de una certificación desactivada antes de restaurarla."
+              "path": ["api","v1","portfolio","certifications"],
+              "query": [{ "key": "include_inactive", "value": "true" }]
+            }
           }
         },
         {
@@ -450,47 +414,42 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/portfolio/certifications",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "certifications"]
-            },
+            "url": { "raw": "{{base_url}}/api/v1/portfolio/certifications", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","certifications"] },
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "name", "value": "AWS Certified Solutions Architect", "type": "text", "description": "Nombre de la certificación (obligatorio, máx 255)" },
-                { "key": "issuing_entity", "value": "Amazon Web Services", "type": "text", "description": "Entidad emisora (obligatorio, máx 255)" },
-                { "key": "issue_date", "value": "03/2024", "type": "text", "description": "Fecha de emisión en formato m/Y (obligatorio)" },
-                { "key": "expiration_date", "value": "03/2027", "type": "text", "description": "Fecha de vencimiento en formato m/Y (opcional, debe ser posterior a issue_date)" },
-                { "key": "image", "type": "file", "description": "Imagen de la certificación — opcional. Formatos: jpg, jpeg, png, webp. Máx 5MB. Se sube a Cloudinary." }
+                { "key": "name",            "value": "AWS Certified Solutions Architect", "type": "text" },
+                { "key": "issuing_entity",  "value": "Amazon Web Services",              "type": "text" },
+                { "key": "issue_date",      "value": "03/2024",                          "type": "text" },
+                { "key": "expiration_date", "value": "03/2027",                          "type": "text" },
+                { "key": "image",           "type": "file", "description": "jpg, jpeg, png, webp. Máx 5MB. Opcional." }
               ]
             },
-            "description": "Crea una nueva certificación. El script de Tests guarda el ID en {{certification_id}} automáticamente.\n\nDevuelve 404 si el usuario no tiene portfolio creado.\nRequiere Content-Type: multipart/form-data (automático al usar form-data en Postman — NO agregar manualmente)."
+            "description": "Usa multipart/form-data (NO agregar Content-Type manualmente — Postman lo gestiona)."
           }
         },
         {
-          "name": "Editar Certificación (texto)",
+          "name": "Editar Certificación",
           "request": {
             "method": "PUT",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "certifications", "{{certification_id}}"]
+              "path": ["api","v1","portfolio","certifications","{{certification_id}}"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"AWS Certified Solutions Architect — Associate\",\n  \"issuing_entity\": \"Amazon Web Services\",\n  \"issue_date\": \"03/2024\",\n  \"expiration_date\": \"06/2027\"\n}",
               "options": { "raw": { "language": "json" } }
-            },
-            "description": "Actualiza los campos de texto de una certificación. Todos los campos son opcionales — enviar solo los que se quieren modificar. Para cambiar la imagen usar POST /{id}/image.\n\nDevuelve 403 si la certificación no pertenece al usuario autenticado."
+            }
           }
         },
         {
@@ -498,21 +457,20 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}/image",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "certifications", "{{certification_id}}", "image"]
+              "path": ["api","v1","portfolio","certifications","{{certification_id}}","image"]
             },
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "image", "type": "file", "description": "Nueva imagen — obligatoria. Formatos: jpg, jpeg, png, webp. Máx 5MB. Reemplaza la imagen anterior en Cloudinary." }
+                { "key": "image", "type": "file", "description": "Reemplaza la imagen anterior en Cloudinary. Obligatorio." }
               ]
-            },
-            "description": "Sube o reemplaza la imagen de una certificación en Cloudinary. Elimina la imagen anterior automáticamente. El campo image es obligatorio.\n\nDevuelve 403 si la certificación no pertenece al usuario autenticado."
+            }
           }
         },
         {
@@ -520,16 +478,14 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "certifications", "{{certification_id}}"]
-            },
-            "body": { "mode": "none" },
-            "description": "Desactiva la certificación (is_active = false). NO la elimina de la base de datos. Devuelve 200 con el recurso actualizado.\n\nDevuelve 403 si la certificación no pertenece al usuario autenticado."
+              "path": ["api","v1","portfolio","certifications","{{certification_id}}"]
+            }
           }
         },
         {
@@ -537,38 +493,32 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}/restore",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "certifications", "{{certification_id}}", "restore"]
-            },
-            "body": { "mode": "none" },
-            "description": "Reactiva una certificación desactivada (is_active = true). Devuelve 200 con el recurso actualizado.\n\nTip: Usar 'Listar Certificaciones (incluyendo inactivas)' para obtener el ID de la certificación a restaurar.\n\nDevuelve 403 si la certificación no pertenece al usuario autenticado."
+              "path": ["api","v1","portfolio","certifications","{{certification_id}}","restore"]
+            }
           }
         }
       ]
     },
     {
-      "name": "Habilidades (HU-4)",
-      "description": "Gestión de habilidades del portfolio del usuario autenticado. Todos los endpoints requieren Authorization: Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener un portfolio creado.\n\nTipos de habilidades:\n- technical: requieren nivel (basic, intermediate, advanced)\n- soft: no tienen nivel\n\nLas habilidades nunca se eliminan permanentemente — DELETE desactiva (is_active = false). Si el usuario agrega una habilidad que desactivó antes, el sistema la reactiva automáticamente.",
+      "name": "Habilidades del Portfolio",
+      "description": "Gestión de habilidades del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: Portfolio creado.\n\nTipos:\n- tecnica: requieren level (basic | intermediate | advanced)\n- blanda: no tienen level\n\nSoft delete: DELETE desactiva (is_active=false). Si se agrega la misma skill desactivada, se reactiva automáticamente.",
       "item": [
         {
-          "name": "Catálogo de Habilidades",
+          "name": "Catálogo Completo de Skills",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/skills/catalog",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "skills", "catalog"]
-            },
-            "description": "Devuelve el catálogo completo de habilidades disponibles agrupadas por tipo (technical/soft) y categoría. Usá los IDs de aquí para agregar habilidades al portfolio."
+            "url": { "raw": "{{base_url}}/api/v1/skills/catalog", "host": ["{{base_url}}"], "path": ["api","v1","skills","catalog"] },
+            "description": "Catálogo completo de skills agrupado por type (tecnica/blanda) y luego por category. Úsalo para obtener los skill_id al agregar habilidades al portfolio."
           }
         },
         {
@@ -576,15 +526,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/portfolio/skills",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "skills"]
-            },
-            "description": "Devuelve las habilidades activas del usuario agrupadas por tipo (technical/soft) y categoría. Lista vacía si no tiene portfolio o habilidades activas."
+            "url": { "raw": "{{base_url}}/api/v1/portfolio/skills", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","skills"] }
           }
         },
         {
@@ -592,18 +537,15 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/portfolio/skills?include_inactive=true",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "skills"],
-              "query": [
-                { "key": "include_inactive", "value": "true", "description": "Incluye habilidades desactivadas (is_active = false)." }
-              ]
-            },
-            "description": "Devuelve las habilidades desactivadas del usuario. Útil para consultar el historial."
+              "path": ["api","v1","portfolio","skills"],
+              "query": [{ "key": "include_inactive", "value": "true" }]
+            }
           }
         },
         {
@@ -627,20 +569,16 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/portfolio/skills",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "skills"]
-            },
+            "url": { "raw": "{{base_url}}/api/v1/portfolio/skills", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","skills"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"skill_id\": 10,\n  \"level\": \"avanzado\"\n}",
+              "raw": "{\n  \"skill_id\": 1,\n  \"level\": \"advanced\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Agrega una habilidad técnica al portfolio. El skill_id debe obtenerse del catálogo (GET /skills/catalog).\n\nValidaciones:\n- skill_id: obligatorio, debe existir en el catálogo\n- level: obligatorio para habilidades técnicas (basic, intermediate, advanced)\n\nSi la habilidad estaba desactivada, se reactiva automáticamente con el nuevo nivel.\nDevuelve 422 si la habilidad ya está activa en el portfolio.\nDevuelve 404 si el usuario no tiene portfolio."
+            "description": "Agrega una skill técnica. level es obligatorio para tecnica (basic | intermediate | advanced). Obtén el skill_id del catálogo."
           }
         },
         {
@@ -649,20 +587,16 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
             ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/portfolio/skills",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "skills"]
-            },
+            "url": { "raw": "{{base_url}}/api/v1/portfolio/skills", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","skills"] },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"skill_id\": 80\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Agrega una habilidad blanda al portfolio. NO se envía level (las habilidades blandas no tienen nivel).\n\nID 80 = 'Comunicación técnica' (primera habilidad blanda del catálogo).\nUsá GET /skills/catalog para ver todos los IDs disponibles.\n\nSi se envía level para una habilidad blanda, devuelve 422.\nSi la habilidad estaba desactivada, se reactiva automáticamente."
+            "description": "Agrega una skill blanda. NO envíes level (se ignora). Obtén el skill_id del catálogo, sección 'blanda'."
           }
         },
         {
@@ -671,20 +605,19 @@
             "method": "PUT",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/portfolio/skills/{{portfolio_skill_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "skills", "{{portfolio_skill_id}}"]
+              "path": ["api","v1","portfolio","skills","{{portfolio_skill_id}}"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"level\": \"intermedio\"\n}",
+              "raw": "{\n  \"level\": \"intermediate\"\n}",
               "options": { "raw": { "language": "json" } }
-            },
-            "description": "Cambia el nivel de una habilidad técnica activa. Solo aplica a habilidades técnicas (las blandas no tienen nivel).\n\nNiveles válidos: basic, intermediate, advanced\n\nDevuelve 422 si la habilidad es blanda o está inactiva.\nDevuelve 403 si la habilidad no pertenece al usuario autenticado."
+            }
           }
         },
         {
@@ -692,39 +625,37 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Accept", "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/portfolio/skills/{{portfolio_skill_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "portfolio", "skills", "{{portfolio_skill_id}}"]
-            },
-            "body": { "mode": "none" },
-            "description": "Desactiva la habilidad (is_active = false). NO la elimina de la base de datos. Devuelve 200 con el recurso actualizado.\n\nDevuelve 403 si la habilidad no pertenece al usuario autenticado."
+              "path": ["api","v1","portfolio","skills","{{portfolio_skill_id}}"]
+            }
           }
         }
       ]
     },
     {
-      "name": "Admin",
-      "description": "Endpoints exclusivos para usuarios con rol 'admin'. Todos requieren Authorization: Bearer {{token}} con token de un admin.",
+      "name": "Admin — Usuarios",
+      "description": "Gestión de usuarios. Requiere Bearer {{admin_token}} (login con admin@portfolio.test).",
       "item": [
         {
           "name": "Listar Usuarios",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/users?is_active=true&per_page=20",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "users"],
+              "path": ["api","v1","admin","users"],
               "query": [
-                { "key": "is_active", "value": "true", "description": "Filtrar por estado activo (true/false). Opcional." },
-                { "key": "per_page", "value": "20", "description": "Registros por página, máx 100 (opcional, default 20)" }
+                { "key": "is_active", "value": "true",  "description": "true | false | omitir para todos" },
+                { "key": "per_page",  "value": "20",    "description": "Máx 100, default 20" }
               ]
             }
           }
@@ -734,18 +665,16 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/users/:user_id/toggle-status",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "users", ":user_id", "toggle-status"],
-              "variable": [
-                { "key": "user_id", "value": "2" }
-              ]
+              "path": ["api","v1","admin","users",":user_id","toggle-status"],
+              "variable": [{ "key": "user_id", "value": "2" }]
             },
-            "body": { "mode": "none" }
+            "description": "Activa o desactiva el usuario. Al desactivar, revoca todos sus tokens activos. No se puede aplicar al propio admin."
           }
         },
         {
@@ -753,18 +682,98 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/activity-log?user_id=2&per_page=20",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "activity-log"],
+              "path": ["api","v1","admin","activity-log"],
               "query": [
-                { "key": "user_id", "value": "2", "description": "Filtrar por ID de usuario (opcional)" },
-                { "key": "per_page", "value": "20", "description": "Registros por página, máx 100 (opcional, default 20)" }
+                { "key": "user_id",  "value": "2",  "description": "Filtrar por usuario (opcional)" },
+                { "key": "per_page", "value": "20", "description": "Máx 100, default 20" }
               ]
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Catálogo de Skills",
+      "description": "Gestión del catálogo de skills técnicas y blandas. Requiere Bearer {{admin_token}}.\n\nREGLAS:\n- El admin puede AGREGAR skills a categorías existentes\n- NO puede crear nuevas categorías (las categorías son fijas: Lenguajes de Programación, Frameworks & Librerías, etc.)\n- NO puede eliminar skills\n\nFLUJO:\n1. GET /admin/skills/categories → ver qué categorías existen\n2. GET /admin/skills → ver skills existentes (para no duplicar)\n3. POST /admin/skills → agregar nueva skill",
+      "item": [
+        {
+          "name": "Ver Categorías Disponibles",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/skills/categories", "host": ["{{base_url}}"], "path": ["api","v1","admin","skills","categories"] },
+            "description": "Devuelve las combinaciones type + category existentes. Úsalas para el dropdown al crear una skill nueva.\n\nEjemplo de respuesta:\n[\n  { \"type\": \"tecnica\", \"category\": \"Frameworks & Librerías\" },\n  { \"type\": \"tecnica\", \"category\": \"Lenguajes de Programación\" },\n  { \"type\": \"blanda\",  \"category\": \"Colaboración\" },\n  ...\n]"
+          }
+        },
+        {
+          "name": "Listar Todas las Skills",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/skills?type=tecnica&per_page=50",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","skills"],
+              "query": [
+                { "key": "type",     "value": "tecnica",   "description": "tecnica | blanda (opcional)" },
+                { "key": "category", "value": "",          "description": "Filtrar por categoría exacta (opcional)" },
+                { "key": "per_page", "value": "50",        "description": "Máx 100, default 20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Agregar Nueva Skill",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/skills", "host": ["{{base_url}}"], "path": ["api","v1","admin","skills"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bun\",\n  \"category\": \"Herramientas & Plataformas\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Agrega una nueva skill al catálogo.\n\n- name: nombre de la skill (se aplica strip_tags)\n- category: DEBE ser una categoría ya existente (ver GET /admin/skills/categories)\n\nEl type se deriva automáticamente de la categoría seleccionada.\n\nErrores:\n- 422 si category no existe: 'The selected category does not exist. You cannot create new categories.'\n- 422 si name ya existe en esa categoría: 'A skill with this name already exists in the selected category.'"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Categorías de Proyecto",
+      "description": "Gestión de categorías de proyecto. Requiere Bearer {{admin_token}}.\n\nA diferencia de las categorías de skills (fijas), el admin SÍ puede agregar nuevas categorías de proyecto según las necesidades del sistema.\n\nCategorías seeded: Web Development, Mobile Development, Data Science, DevOps, UI/UX Design, Machine Learning, Cybersecurity, Open Source, Other",
+      "item": [
+        {
+          "name": "Agregar Categoría de Proyecto",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/project-categories", "host": ["{{base_url}}"], "path": ["api","v1","admin","project-categories"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Blockchain\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Crea una nueva categoría de proyecto.\n\n- name: obligatorio, único, máx 100 chars (se aplica strip_tags)\n\nErrores:\n- 422 si el nombre ya existe: 'A project category with this name already exists.'"
           }
         }
       ]
