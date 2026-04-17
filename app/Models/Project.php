@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -14,22 +15,21 @@ class Project extends Model
 
     protected $fillable = [
         'portfolio_id',
-        'category_id',
         'title',
         'description',
         'project_url',
-        'technologies',
+        'archived',
     ];
 
     protected $casts = [
-        'technologies' => 'array',
+        'archived' => 'boolean',
     ];
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('project')
-            ->logOnly(['title', 'description', 'project_url', 'technologies', 'category_id'])
+            ->logOnly(['title', 'description', 'project_url', 'archived'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -39,8 +39,8 @@ class Project extends Model
         return $this->belongsTo(Portfolio::class);
     }
 
-    public function category(): BelongsTo
+    public function skills(): BelongsToMany
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsToMany(Skill::class, 'project_skills');
     }
 }

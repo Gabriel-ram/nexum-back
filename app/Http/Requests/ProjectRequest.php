@@ -18,23 +18,16 @@ class ProjectRequest extends FormRequest
             'description' => $this->description ? strip_tags($this->description) : null,
             'project_url' => $this->project_url ? strip_tags($this->project_url) : null,
         ]);
-
-        if ($this->has('technologies') && is_array($this->technologies)) {
-            $this->merge([
-                'technologies' => array_map('strip_tags', $this->technologies),
-            ]);
-        }
     }
 
     public function rules(): array
     {
         return [
-            'title'           => ['required', 'string', 'max:255'],
-            'description'     => ['nullable', 'string', 'max:5000'],
-            'project_url'     => ['nullable', 'url', 'max:500'],
-            'technologies'    => ['nullable', 'array', 'max:20'],
-            'technologies.*'  => ['string', 'max:50'],
-            'category_id'     => ['nullable', 'integer', 'exists:categories,id'],
+            'title'       => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'project_url' => ['nullable', 'url', 'max:500'],
+            'skill_ids'   => ['nullable', 'array', 'max:30'],
+            'skill_ids.*' => ['integer', 'exists:skills,id'],
         ];
     }
 }

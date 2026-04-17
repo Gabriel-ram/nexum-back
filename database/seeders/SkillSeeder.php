@@ -9,6 +9,7 @@ class SkillSeeder extends Seeder
 {
     public function run(): void
     {
+        // --- Skills técnicas del portfolio (type = 'tecnica') ---
         $technical = [
             'Lenguajes de Programación' => [
                 'Python', 'JavaScript', 'TypeScript', 'Java', 'C#', 'C++', 'C', 'Go',
@@ -35,6 +36,7 @@ class SkillSeeder extends Seeder
             ],
         ];
 
+        // --- Skills blandas del portfolio (type = 'blanda') ---
         $soft = [
             'Comunicación' => [
                 'Comunicación técnica', 'Documentación', 'Presentación de ideas',
@@ -58,6 +60,21 @@ class SkillSeeder extends Seeder
             ],
         ];
 
+        // --- Categorías de proyecto (type = 'project_category') ---
+        // Reemplaza la tabla 'categories' eliminada. El usuario selecciona
+        // a qué área pertenece su proyecto al igual que cualquier otra skill.
+        $projectCategories = [
+            'Web Development',
+            'Mobile Development',
+            'Data Science',
+            'DevOps',
+            'UI/UX Design',
+            'Machine Learning',
+            'Cybersecurity',
+            'Open Source',
+            'Other',
+        ];
+
         foreach ($technical as $category => $names) {
             foreach ($names as $name) {
                 Skill::firstOrCreate(
@@ -74,6 +91,13 @@ class SkillSeeder extends Seeder
                     ['category' => $category]
                 );
             }
+        }
+
+        foreach ($projectCategories as $name) {
+            Skill::firstOrCreate(
+                ['name' => $name, 'type' => 'project_category'],
+                ['category' => 'Categoría de Proyecto']
+            );
         }
     }
 }
