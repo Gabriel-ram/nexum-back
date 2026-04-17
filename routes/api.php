@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\ActivityLogController;
+use App\Http\Controllers\Api\V1\AdminSkillController;
 use App\Http\Controllers\Api\V1\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CertificationController;
@@ -47,6 +48,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/users', [AdminUserController::class, 'index']);
         Route::patch('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus']);
         Route::get('/activity-log', [ActivityLogController::class, 'index']);
+
+        // Gestión del catálogo de skills
+        Route::get('/skills/categories', [AdminSkillController::class, 'categories']);
+        Route::get('/skills', [AdminSkillController::class, 'index']);
+        Route::post('/skills', [AdminSkillController::class, 'store']);
     });
 
     // HU-7 + HU-8: Portfolio del usuario autenticado

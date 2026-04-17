@@ -63,21 +63,20 @@ class ProjectTest extends TestCase
         $this->getJson('/api/v1/projects')->assertUnauthorized();
     }
 
-    public function test_projects_can_be_sorted_by_title_asc(): void
+    public function test_projects_are_returned_ordered_by_most_recent(): void
     {
         $user = $this->professionalUser();
         $portfolio = Portfolio::factory()->create(['user_id' => $user->id]);
 
-        Project::factory()->create(['portfolio_id' => $portfolio->id, 'title' => 'Zebra Project']);
-        Project::factory()->create(['portfolio_id' => $portfolio->id, 'title' => 'Alpha Project']);
+        $older = Project::factory()->create(['portfolio_id' => $portfolio->id, 'created_at' => now()->subDays(5)]);
+        $newer = Project::factory()->create(['portfolio_id' => $portfolio->id, 'created_at' => now()]);
 
-        $response = $this->actingAs($user)
-            ->getJson('/api/v1/projects?sort_by=title&sort_dir=asc');
+        $response = $this->actingAs($user)->getJson('/api/v1/projects');
 
         $response->assertOk();
-        $titles = collect($response->json('data'))->pluck('title')->values();
-        $this->assertEquals('Alpha Project', $titles[0]);
-        $this->assertEquals('Zebra Project', $titles[1]);
+        $ids = collect($response->json('data'))->pluck('id')->values();
+        $this->assertEquals($newer->id, $ids[0]);
+        $this->assertEquals($older->id, $ids[1]);
     }
 
     // -------------------------------------------------------------------------

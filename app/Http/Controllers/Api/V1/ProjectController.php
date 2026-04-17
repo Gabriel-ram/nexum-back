@@ -14,7 +14,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class ProjectController extends Controller
 {
     /**
-     * Lista los proyectos activos (no archivados) del usuario autenticado.
+     * Lista todos los proyectos activos (no archivados) del usuario autenticado.
+     * El ordenamiento y filtrado se delegan al frontend dado el volumen acotado por usuario.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -24,16 +25,10 @@ class ProjectController extends Controller
             return ProjectResource::collection(collect());
         }
 
-        $sortField = in_array($request->input('sort_by'), ['title', 'created_at'])
-            ? $request->input('sort_by')
-            : 'created_at';
-
-        $sortDir = $request->input('sort_dir') === 'asc' ? 'asc' : 'desc';
-
         $projects = $portfolio->projects()
             ->where('archived', false)
             ->with('skills')
-            ->orderBy($sortField, $sortDir)
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return ProjectResource::collection($projects);
