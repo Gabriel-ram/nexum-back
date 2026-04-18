@@ -15,7 +15,7 @@ class ProjectCategoryController extends Controller
      */
     public function index(): JsonResponse
     {
-        $categories = ProjectCategory::orderBy('name')->get(['id', 'name']);
+        $categories = ProjectCategory::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return response()->json(['data' => $categories]);
     }

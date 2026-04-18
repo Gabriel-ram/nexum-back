@@ -846,6 +846,68 @@
             },
             "description": "Crea una nueva categoría de proyecto.\n\n- name: obligatorio, único, máx 100 chars (se aplica strip_tags)\n\nErrores:\n- 422 si el nombre ya existe: 'A project category with this name already exists.'"
           }
+        },
+        {
+          "name": "Listar Categorías de Proyecto (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/project-categories?status=active&per_page=5",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","project-categories"],
+              "query": [
+                { "key": "search",   "value": "",       "description": "Filtrar por nombre (LIKE, case-insensitive, opcional)" },
+                { "key": "status",   "value": "active", "description": "active | inactive | omitir para todas" },
+                { "key": "per_page", "value": "5",      "description": "Máx 100, default 5" },
+                { "key": "page",     "value": "1",      "description": "Número de página" }
+              ]
+            },
+            "description": "Lista paginada de categorías de proyecto con estado. Devuelve data + links + meta (total, per_page, current_page).\n\nResponse shape por ítem:\n{\n  \"id\": 1,\n  \"name\": \"Web Development\",\n  \"status\": \"active\",\n  \"created_at\": \"2026-01-01T00:00:00.000Z\"\n}"
+          }
+        },
+        {
+          "name": "Editar Categoría de Proyecto",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/project-categories/:category_id",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","project-categories",":category_id"],
+              "variable": [{ "key": "category_id", "value": "1" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Web & Mobile Development\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Actualiza el nombre de una categoría de proyecto.\n\n- name: obligatorio, único excluyendo la propia categoría, máx 100 chars (se aplica strip_tags)\n\nErrores:\n- 422 si el nombre ya existe en otra categoría\n- 404 si la categoría no existe"
+          }
+        },
+        {
+          "name": "Toggle Estado de Categoría",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/project-categories/:category_id/toggle-status",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","project-categories",":category_id","toggle-status"],
+              "variable": [{ "key": "category_id", "value": "1" }]
+            },
+            "description": "Activa o desactiva una categoría de proyecto.\n\n- Si estaba activa → pasa a inactiva (deja de aparecer en el selector de proyectos)\n- Si estaba inactiva → pasa a activa\n\nLos proyectos que ya tienen la categoría asignada la siguen mostrando aunque esté inactiva.\n\nResponse:\n{\n  \"message\": \"Category deactivated successfully.\",\n  \"data\": { \"id\": 1, \"name\": \"Web Development\", \"status\": \"inactive\", \"created_at\": \"...\" }\n}"
+          }
         }
       ]
     }

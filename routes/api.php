@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\ActivityLogController;
+use App\Http\Controllers\Api\V1\Admin\ProjectCategoryController as AdminProjectCategoryController;
 use App\Http\Controllers\Api\V1\AdminSkillController;
 use App\Http\Controllers\Api\V1\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -17,6 +18,9 @@ Route::prefix('v1')->group(function () {
 
     // Public: featured profiles for landing page
     Route::get('/featured-profiles', [FeaturedProfilesController::class, 'index']);
+
+    // Public: categorías de proyecto (para el selector del modal de creación de proyectos)
+    Route::get('/project-categories', [ProjectCategoryController::class, 'index']);
 
     Route::prefix('auth')->group(function () {
 
@@ -58,6 +62,9 @@ Route::prefix('v1')->group(function () {
 
         // Gestión de categorías de proyecto
         Route::post('/project-categories', [ProjectCategoryController::class, 'store']);
+        Route::get('/project-categories', [AdminProjectCategoryController::class, 'index']);
+        Route::patch('/project-categories/{category}', [AdminProjectCategoryController::class, 'update']);
+        Route::patch('/project-categories/{category}/toggle-status', [AdminProjectCategoryController::class, 'toggleStatus']);
     });
 
     // HU-7 + HU-8: Portfolio del usuario autenticado
@@ -89,9 +96,6 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         // Catálogo de skills del portfolio (para agregar habilidades al perfil)
         Route::get('/skills/catalog', [SkillController::class, 'catalog']);
-
-        // Categorías de proyecto (lista pública para usuarios autenticados)
-        Route::get('/project-categories', [ProjectCategoryController::class, 'index']);
 
         // Skills técnicas disponibles para asociar a proyectos
         // Debe ir antes de /projects/{project} para que 'skills' no se tome como ID
