@@ -27,9 +27,7 @@ class SkillController extends Controller
         $query = PortfolioSkill::with('skill')
             ->where('portfolio_id', $portfolio->id);
 
-        if ($request->boolean('include_inactive')) {
-            $query->where('is_active', false);
-        } else {
+        if (! $request->boolean('include_inactive')) {
             $query->where('is_active', true);
         }
 

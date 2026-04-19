@@ -579,7 +579,7 @@
     },
     {
       "name": "Habilidades del Portfolio",
-      "description": "Gestión de habilidades del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: Portfolio creado.\n\nTipos:\n- tecnica: requieren level (basic | intermediate | advanced)\n- blanda: no tienen level\n\nSoft delete: DELETE desactiva (is_active=false). Si se agrega la misma skill desactivada, se reactiva automáticamente.",
+      "description": "Gestión de habilidades del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: Portfolio creado.\n\nTipos:\n- tecnica: requieren level (basico | intermedio | avanzado)\n- blanda: no tienen level\n\nSoft delete: DELETE desactiva (is_active=false). Si se agrega la misma skill desactivada, se reactiva automáticamente.",
       "item": [
         {
           "name": "Catálogo Completo de Skills",
@@ -647,10 +647,10 @@
             "url": { "raw": "{{base_url}}/api/v1/portfolio/skills", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","skills"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"skill_id\": 1,\n  \"level\": \"advanced\"\n}",
+              "raw": "{\n  \"skill_id\": 1,\n  \"level\": \"avanzado\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Agrega una skill técnica. level es obligatorio para tecnica (basic | intermediate | advanced). Obtén el skill_id del catálogo."
+            "description": "Agrega una skill técnica. level es obligatorio para tecnica (basico | intermedio | avanzado). Obtén el skill_id del catálogo."
           }
         },
         {
@@ -687,7 +687,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"level\": \"intermediate\"\n}",
+              "raw": "{\n  \"level\": \"intermedio\"\n}",
               "options": { "raw": { "language": "json" } }
             }
           }
