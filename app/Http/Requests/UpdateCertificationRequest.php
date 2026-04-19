@@ -17,6 +17,7 @@ class UpdateCertificationRequest extends FormRequest
     {
         $this->merge([
             'name'           => $this->name           ? strip_tags($this->name)           : $this->name,
+            'description'    => $this->description    ? strip_tags($this->description)    : $this->description,
             'issuing_entity' => $this->issuing_entity ? strip_tags($this->issuing_entity) : $this->issuing_entity,
         ]);
     }
@@ -25,6 +26,7 @@ class UpdateCertificationRequest extends FormRequest
     {
         return [
             'name'            => ['sometimes', 'string', 'max:255'],
+            'description'     => ['sometimes', 'nullable', 'string', 'max:1000'],
             'issuing_entity'  => ['sometimes', 'string', 'max:255'],
             'issue_date'      => ['sometimes', 'date_format:m/Y'],
             'expiration_date' => [

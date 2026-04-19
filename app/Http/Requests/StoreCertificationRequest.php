@@ -17,6 +17,7 @@ class StoreCertificationRequest extends FormRequest
     {
         $this->merge([
             'name'           => $this->name           ? strip_tags($this->name)           : $this->name,
+            'description'    => $this->description    ? strip_tags($this->description)    : $this->description,
             'issuing_entity' => $this->issuing_entity ? strip_tags($this->issuing_entity) : $this->issuing_entity,
         ]);
     }
@@ -25,6 +26,7 @@ class StoreCertificationRequest extends FormRequest
     {
         return [
             'name'            => ['required', 'string', 'max:255'],
+            'description'     => ['nullable', 'string', 'max:1000'],
             'issuing_entity'  => ['required', 'string', 'max:255'],
             'issue_date'      => ['required', 'date_format:m/Y'],
             'expiration_date' => [
@@ -49,7 +51,6 @@ class StoreCertificationRequest extends FormRequest
                     }
                 },
             ],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 }

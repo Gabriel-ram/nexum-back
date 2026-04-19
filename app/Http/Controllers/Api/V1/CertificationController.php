@@ -25,16 +25,7 @@ class CertificationController extends Controller
             return CertificationResource::collection(collect());
         }
 
-        if ($request->boolean('include_inactive')) {
-            $certifications = Certification::where('portfolio_id', $portfolio->id)
-                ->where('is_active', false)
-                ->orderByDesc('issue_date')
-                ->get();
-        } else {
-            $certifications = $portfolio->certifications;
-        }
-
-        return CertificationResource::collection($certifications);
+        return CertificationResource::collection($portfolio->certifications);
     }
 
     public function store(StoreCertificationRequest $request): CertificationResource|JsonResponse
@@ -47,25 +38,18 @@ class CertificationController extends Controller
 
         $validated = $request->validated();
 
-        $data = [
+        $certification = Certification::create([
             'portfolio_id'    => $portfolio->id,
             'name'            => $validated['name'],
+            'description'     => $validated['description'] ?? null,
             'issuing_entity'  => $validated['issuing_entity'],
             'issue_date'      => $this->parseDate($validated['issue_date']),
             'expiration_date' => isset($validated['expiration_date'])
                 ? $this->parseDate($validated['expiration_date'])
                 : null,
-        ];
+        ]);
 
-        if ($request->hasFile('image')) {
-            $uploaded = $this->cloudinary->uploadCertificationImage($request->file('image'));
-            $data['image_url']            = $uploaded['url'];
-            $data['cloudinary_public_id'] = $uploaded['public_id'];
-        }
-
-        $certification = Certification::create($data);
-
-        return new CertificationResource($certification);
+        return (new CertificationResource($certification))->response()->setStatusCode(201);
     }
 
     public function update(UpdateCertificationRequest $request, Certification $certification): CertificationResource|JsonResponse
@@ -74,15 +58,14 @@ class CertificationController extends Controller
             abort(403);
         }
 
-        if (! $certification->is_active) {
-            abort(422, 'Cannot edit an inactive certification. Restore it first.');
-        }
-
         $validated = $request->validated();
         $data      = [];
 
         if (isset($validated['name'])) {
             $data['name'] = $validated['name'];
+        }
+        if (array_key_exists('description', $validated)) {
+            $data['description'] = $validated['description'];
         }
         if (isset($validated['issuing_entity'])) {
             $data['issuing_entity'] = $validated['issuing_entity'];
@@ -123,26 +106,17 @@ class CertificationController extends Controller
         return new CertificationResource($certification->fresh());
     }
 
-    public function destroy(Request $request, Certification $certification): CertificationResource|JsonResponse
+    public function destroy(Request $request, Certification $certification): JsonResponse
     {
         if ($certification->portfolio_id !== $request->user()->portfolio?->id) {
             abort(403);
         }
 
-        $certification->update(['is_active' => false]);
+        $this->cloudinary->deleteCertificationImage($certification->cloudinary_public_id);
 
-        return new CertificationResource($certification->fresh());
-    }
+        $certification->delete();
 
-    public function restore(Request $request, Certification $certification): CertificationResource|JsonResponse
-    {
-        if ($certification->portfolio_id !== $request->user()->portfolio?->id) {
-            abort(403);
-        }
-
-        $certification->update(['is_active' => true]);
-
-        return new CertificationResource($certification->fresh());
+        return response()->json(['message' => 'Certification deleted successfully.'], 200);
     }
 
     private function parseDate(string $date): string

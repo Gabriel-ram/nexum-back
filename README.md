@@ -361,55 +361,67 @@ avatar: [archivo .jpg/.jpeg/.png/.webp, máx 2MB]
 
 ### Certificaciones (`/portfolio/certifications`)
 
-Todos requieren 🔒 (`Authorization: Bearer {token}`). Las fechas se envían y reciben en formato `m/Y` (ej: `04/2026`). Las certificaciones nunca se eliminan físicamente — se desactivan con `is_active = false`.
+Todos requieren 🔒 (`Authorization: Bearer {token}`). Las fechas se envían y reciben en formato `m/Y` (ej: `04/2026`). `store` y `update` usan JSON. Solo `updateImage` usa `multipart/form-data`. `DELETE` elimina permanentemente.
 
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| `GET` | `/portfolio/certifications` | 🔒 | Lista las certificaciones activas del usuario. `?include_inactive=true` incluye también las desactivadas. |
-| `POST` | `/portfolio/certifications` | 🔒 | Crea una certificación. Imagen opcional — `multipart/form-data`. Requiere portfolio creado. |
-| `PUT` | `/portfolio/certifications/{id}` | 🔒 | Actualiza campos de texto. JSON. Todos los campos son opcionales. |
-| `POST` | `/portfolio/certifications/{id}/image` | 🔒 | Sube o reemplaza imagen en Cloudinary. `multipart/form-data`. |
-| `DELETE` | `/portfolio/certifications/{id}` | 🔒 | Desactiva la certificación (`is_active = false`). Devuelve 200 con el recurso. |
-| `PATCH` | `/portfolio/certifications/{id}/restore` | 🔒 | Reactiva una certificación desactivada (`is_active = true`). Devuelve 200 con el recurso. |
+| `GET` | `/portfolio/certifications` | 🔒 | Lista todas las certificaciones del usuario, ordenadas por `issue_date` descendente. |
+| `POST` | `/portfolio/certifications` | 🔒 | Crea una certificación. JSON. Sin imagen — usá `POST /{id}/image` para eso. Devuelve 201. |
+| `PUT` | `/portfolio/certifications/{id}` | 🔒 | Actualiza campos. JSON. Todos opcionales (`sometimes`). |
+| `POST` | `/portfolio/certifications/{id}/image` | 🔒 | Sube o reemplaza imagen en Cloudinary. `multipart/form-data`, campo `image`. Máx 2MB. |
+| `DELETE` | `/portfolio/certifications/{id}` | 🔒 | Elimina permanentemente la certificación y su imagen en Cloudinary. Devuelve 200 con mensaje. |
 
 > Los endpoints con `{id}` devuelven 403 si la certificación no pertenece al usuario autenticado.
 
-**Ejemplo — POST /portfolio/certifications (form-data):**
-```
-name:             AWS Certified Solutions Architect
-issuing_entity:   Amazon Web Services
-issue_date:       03/2024
-expiration_date:  03/2027
-image:            [archivo .jpg/.jpeg/.png/.webp, máx 2MB — opcional]
+**Ejemplo — POST /portfolio/certifications (JSON):**
+```json
+{
+  "name": "AWS Certified Solutions Architect",
+  "description": "Certificación oficial de Amazon Web Services para arquitectura de soluciones en la nube.",
+  "issuing_entity": "Amazon Web Services",
+  "issue_date": "03/2024",
+  "expiration_date": "03/2027"
+}
 ```
 
 **Ejemplo — PUT /portfolio/certifications/{id} (JSON):**
 ```json
 {
   "name": "AWS Certified Solutions Architect — Associate",
+  "description": "Certificación asociada de AWS para diseño de arquitecturas escalables.",
   "issuing_entity": "Amazon Web Services",
   "issue_date": "03/2024",
   "expiration_date": "06/2027"
 }
 ```
 
-**Respuesta — GET (lista activas):**
+**Ejemplo — POST /portfolio/certifications/{id}/image (form-data):**
+```
+image: [archivo .jpg/.jpeg/.png/.webp, máx 2MB — obligatorio]
+```
+
+**Respuesta — GET (lista):**
 ```json
 {
   "data": [
     {
       "id": 1,
       "name": "AWS Certified Solutions Architect",
+      "description": "Certificación oficial de Amazon Web Services para arquitectura de soluciones en la nube.",
       "issuing_entity": "Amazon Web Services",
       "issue_date": "03/2024",
       "expiration_date": "03/2027",
       "image_url": "https://res.cloudinary.com/tu-cloud/image/upload/v1/nexum/certifications/abc123.jpg",
-      "is_active": true,
       "created_at": "2026-04-16T10:00:00.000000Z",
       "updated_at": "2026-04-16T10:00:00.000000Z"
     }
   ]
 }
+```
+
+**Respuesta — DELETE:**
+```json
+{ "message": "Certification deleted successfully." }
 ```
 
 > `cloudinary_public_id` nunca se expone en la respuesta — es de uso interno para gestión de imágenes en Cloudinary.
