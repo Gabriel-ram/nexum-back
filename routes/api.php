@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\WorkExperienceController;
 use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\Admin\ProjectCategoryController as AdminProjectCategoryController;
 use App\Http\Controllers\Api\V1\AdminSkillController;
@@ -110,6 +111,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/projects/{project}/files', [ProjectFileController::class, 'index']);
         Route::post('/projects/{project}/files', [ProjectFileController::class, 'store']);
         Route::delete('/projects/{project}/files/{file}', [ProjectFileController::class, 'destroy']);
+
+        // HU-12: Experiencia laboral
+        Route::get('/work-experiences', [WorkExperienceController::class, 'index']);
+        Route::post('/work-experiences', [WorkExperienceController::class, 'store']);
+        Route::put('/work-experiences/{id}', [WorkExperienceController::class, 'update']);
+        Route::delete('/work-experiences/{id}', [WorkExperienceController::class, 'destroy']);
     });
 
 });

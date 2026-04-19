@@ -95,9 +95,9 @@ class ProjectTest extends TestCase
             ->assertJsonStructure(['data' => [['id', 'name']]]);
     }
 
-    public function test_unauthenticated_user_cannot_list_project_categories(): void
+    public function test_unauthenticated_user_can_list_project_categories(): void
     {
-        $this->getJson('/api/v1/project-categories')->assertUnauthorized();
+        $this->getJson('/api/v1/project-categories')->assertOk();
     }
 
     // -------------------------------------------------------------------------

@@ -12,7 +12,8 @@
     { "key": "project_id",         "value": "", "type": "string" },
     { "key": "project_file_id",    "value": "", "type": "string" },
     { "key": "certification_id",   "value": "", "type": "string" },
-    { "key": "portfolio_skill_id", "value": "", "type": "string" }
+    { "key": "portfolio_skill_id",   "value": "", "type": "string" },
+    { "key": "work_experience_id",   "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -907,6 +908,100 @@
               "variable": [{ "key": "category_id", "value": "1" }]
             },
             "description": "Activa o desactiva una categoría de proyecto.\n\n- Si estaba activa → pasa a inactiva (deja de aparecer en el selector de proyectos)\n- Si estaba inactiva → pasa a activa\n\nLos proyectos que ya tienen la categoría asignada la siguen mostrando aunque esté inactiva.\n\nResponse:\n{\n  \"message\": \"Category deactivated successfully.\",\n  \"data\": { \"id\": 1, \"name\": \"Web Development\", \"status\": \"inactive\", \"created_at\": \"...\" }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Experiencia",
+      "description": "CRUD de experiencia laboral del usuario autenticado. Requiere Bearer {{token}}.\n\nFLUJO:\n1. GET /work-experiences       → listar experiencias existentes\n2. POST /work-experiences      → crear nueva experiencia (guarda work_experience_id)\n3. PUT /work-experiences/{id}  → editar experiencia\n4. DELETE /work-experiences/{id} → eliminar experiencia (físico)\n\nFORMATO DE FECHAS: YYYY-MM (ej. 2022-03). La BD almacena YYYY-MM-01 internamente.\nSKILLS: reutiliza GET /api/v1/projects/skills para obtener los IDs disponibles.",
+      "item": [
+        {
+          "name": "Listar Experiencias",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/work-experiences",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","work-experiences"]
+            },
+            "description": "Devuelve todas las experiencias laborales del usuario autenticado, ordenadas por start_date descendente. Incluye las skills asociadas.\n\nFechas en formato YYYY-MM. end_date null indica trabajo actual."
+          }
+        },
+        {
+          "name": "Crear Experiencia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.id) { pm.collectionVariables.set(\"work_experience_id\", json.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/work-experiences",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","work-experiences"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": \"Desarrollador Frontend\",\n  \"company\": \"Google\",\n  \"location\": \"Mountain View, CA\",\n  \"employment_type\": \"remote\",\n  \"start_date\": \"2022-03\",\n  \"end_date\": \"2024-01\",\n  \"description\": \"Desarrollo de interfaces con React y TypeScript.\",\n  \"verification_url\": \"https://linkedin.com/in/mi-perfil\",\n  \"skill_ids\": [18, 2, 3]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Crea una nueva experiencia laboral. El ID se guarda automáticamente en {{work_experience_id}}.\n\nValidaciones:\n- position / company: obligatorio, máx 255 chars (strip_tags)\n- location: opcional, máx 255 chars\n- employment_type: remote | on_site | hybrid\n- start_date: requerido, formato YYYY-MM, no puede ser futuro\n- end_date: opcional, YYYY-MM, debe ser >= start_date; null = trabajo actual\n- description: opcional, máx 5000 chars\n- verification_url: opcional, URL válida, máx 500 chars\n- skill_ids: opcional, array de IDs de skills (máx 30)\n\nDevuelve 201 Created."
+          }
+        },
+        {
+          "name": "Editar Experiencia",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/work-experiences/{{work_experience_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","work-experiences","{{work_experience_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": \"Senior Frontend Developer\",\n  \"company\": \"Google\",\n  \"employment_type\": \"on_site\",\n  \"start_date\": \"2022-03\",\n  \"end_date\": \"2024-01\",\n  \"skill_ids\": [18, 2]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Actualiza una experiencia laboral. Mismas validaciones que POST.\n\nIMPORTANTE sobre skill_ids:\n- Si se envía skill_ids, REEMPLAZA por completo las skills (sync)\n- Si NO se envía skill_ids, las skills no cambian\n- Para dejar sin skills: enviar skill_ids: []\n\nDevuelve 404 si la experiencia no pertenece al usuario autenticado."
+          }
+        },
+        {
+          "name": "Eliminar Experiencia",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/work-experiences/{{work_experience_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","work-experiences","{{work_experience_id}}"]
+            },
+            "description": "Elimina físicamente la experiencia laboral. Las skills de la pivot se limpian automáticamente por CASCADE.\n\nDevuelve 404 si la experiencia no pertenece al usuario autenticado.\n\nResponse: { \"message\": \"Work experience deleted successfully.\" }"
           }
         }
       ]
