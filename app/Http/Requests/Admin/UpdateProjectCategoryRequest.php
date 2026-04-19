@@ -15,7 +15,8 @@ class UpdateProjectCategoryRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'name' => $this->name ? strip_tags(trim($this->name)) : null,
+            'name'        => $this->name        ? strip_tags(trim($this->name))  : null,
+            'description' => $this->description ? strip_tags($this->description) : $this->description,
         ]);
     }
 
@@ -28,6 +29,7 @@ class UpdateProjectCategoryRequest extends FormRequest
                 'max:100',
                 Rule::unique('project_categories', 'name')->ignore($this->route('category')),
             ],
+            'description' => ['nullable', 'string', 'max:1000'],
         ];
     }
 

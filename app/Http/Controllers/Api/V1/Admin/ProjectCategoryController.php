@@ -33,7 +33,7 @@ class ProjectCategoryController extends Controller
 
     public function update(UpdateProjectCategoryRequest $request, ProjectCategory $category): ProjectCategoryAdminResource
     {
-        $category->update(['name' => $request->validated('name')]);
+        $category->update($request->validated());
 
         return new ProjectCategoryAdminResource($category->fresh());
     }

@@ -14,14 +14,16 @@ class StoreProjectCategoryRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'name' => $this->name ? strip_tags(trim($this->name)) : null,
+            'name'        => $this->name        ? strip_tags(trim($this->name))        : null,
+            'description' => $this->description ? strip_tags($this->description)       : $this->description,
         ]);
     }
 
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:100', 'unique:project_categories,name'],
+            'name'        => ['required', 'string', 'max:100', 'unique:project_categories,name'],
+            'description' => ['nullable', 'string', 'max:1000'],
         ];
     }
 

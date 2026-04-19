@@ -10,10 +10,11 @@ class ProjectCategoryAdminResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'         => $this->id,
-            'name'       => $this->name,
-            'status'     => $this->is_active ? 'active' : 'inactive',
-            'created_at' => $this->created_at->toISOString(),
+            'id'          => $this->id,
+            'name'        => $this->name,
+            'description' => $this->description,
+            'status'      => $this->is_active ? 'active' : 'inactive',
+            'created_at'  => $this->created_at->toISOString(),
         ];
     }
 }

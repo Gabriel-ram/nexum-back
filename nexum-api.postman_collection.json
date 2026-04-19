@@ -811,7 +811,7 @@
             "url": { "raw": "{{base_url}}/api/v1/admin/project-categories", "host": ["{{base_url}}"], "path": ["api","v1","admin","project-categories"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Blockchain\"\n}",
+              "raw": "{\n  \"name\": \"Blockchain\",\n  \"description\": \"Tecnologías de cadena de bloques y contratos inteligentes.\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Crea una nueva categoría de proyecto.\n\n- name: obligatorio, único, máx 100 chars (se aplica strip_tags)\n\nErrores:\n- 422 si el nombre ya existe: 'A project category with this name already exists.'"
@@ -856,7 +856,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Web & Mobile Development\"\n}",
+              "raw": "{\n  \"name\": \"Web & Mobile Development\",\n  \"description\": \"Desarrollo de aplicaciones web y móviles multiplataforma.\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Actualiza el nombre de una categoría de proyecto.\n\n- name: obligatorio, único excluyendo la propia categoría, máx 100 chars (se aplica strip_tags)\n\nErrores:\n- 422 si el nombre ya existe en otra categoría\n- 404 si la categoría no existe"
