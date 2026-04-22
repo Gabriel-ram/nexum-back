@@ -17,6 +17,7 @@ class SkillResource extends JsonResource
             'category'   => $this->skill->category,
             'level'      => $this->level,
             'is_active'  => $this->is_active,
+            'status'     => 'approved',
             'created_at' => $this->created_at->toISOString(),
             'updated_at' => $this->updated_at->toISOString(),
         ];

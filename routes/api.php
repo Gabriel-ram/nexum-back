@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\WorkExperienceController;
 use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\Admin\ProjectCategoryController as AdminProjectCategoryController;
 use App\Http\Controllers\Api\V1\AdminSkillController;
+use App\Http\Controllers\Api\V1\AdminSkillSuggestionController;
 use App\Http\Controllers\Api\V1\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CertificationController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\V1\FeaturedProfilesController;
 use App\Http\Controllers\Api\V1\ProjectCategoryController;
 use App\Http\Controllers\Api\V1\ProjectFileController;
 use App\Http\Controllers\Api\V1\SkillController;
+use App\Http\Controllers\Api\V1\SkillSuggestionController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use Illuminate\Support\Facades\Route;
@@ -61,6 +63,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/skills', [AdminSkillController::class, 'index']);
         Route::post('/skills', [AdminSkillController::class, 'store']);
 
+        // Sugerencias de habilidades
+        Route::get('/skill-suggestions', [AdminSkillSuggestionController::class, 'index']);
+        Route::patch('/skill-suggestions/{suggestion}/approve', [AdminSkillSuggestionController::class, 'approve']);
+        Route::patch('/skill-suggestions/{suggestion}/reject', [AdminSkillSuggestionController::class, 'reject']);
+
         // Gestión de categorías de proyecto
         Route::post('/project-categories', [ProjectCategoryController::class, 'store']);
         Route::get('/project-categories', [AdminProjectCategoryController::class, 'index']);
@@ -81,6 +88,9 @@ Route::prefix('v1')->group(function () {
             Route::put('/{portfolioSkill}', [SkillController::class, 'update']);
             Route::delete('/{portfolioSkill}', [SkillController::class, 'destroy']);
         });
+
+        // Sugerencia de nueva habilidad
+        Route::post('/skill-suggestions', [SkillSuggestionController::class, 'store']);
 
         // HU-11: Certificaciones
         Route::prefix('certifications')->group(function () {

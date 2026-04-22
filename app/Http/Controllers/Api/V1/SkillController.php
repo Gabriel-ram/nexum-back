@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSkillRequest;
 use App\Http\Requests\UpdateSkillRequest;
 use App\Http\Resources\SkillResource;
+use App\Http\Resources\SkillSuggestionResource;
 use App\Models\PortfolioSkill;
 use App\Models\Skill;
+use App\Models\SkillSuggestion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -38,6 +40,15 @@ class SkillController extends Controller
             $category = $portfolioSkill->skill->category;
 
             $grouped[$type][$category][] = new SkillResource($portfolioSkill);
+        }
+
+        // Include pending suggestions (only visible to the owner, never public)
+        $pending = SkillSuggestion::where('portfolio_id', $portfolio->id)
+            ->where('status', 'pending')
+            ->get();
+
+        foreach ($pending as $suggestion) {
+            $grouped[$suggestion->type][$suggestion->category][] = new SkillSuggestionResource($suggestion);
         }
 
         return response()->json(['data' => $grouped]);

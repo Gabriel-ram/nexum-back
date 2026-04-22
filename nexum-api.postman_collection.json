@@ -13,7 +13,8 @@
     { "key": "project_file_id",    "value": "", "type": "string" },
     { "key": "certification_id",   "value": "", "type": "string" },
     { "key": "portfolio_skill_id",   "value": "", "type": "string" },
-    { "key": "work_experience_id",   "value": "", "type": "string" }
+    { "key": "work_experience_id",   "value": "", "type": "string" },
+    { "key": "suggestion_id",        "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -680,6 +681,45 @@
       ]
     },
     {
+      "name": "Sugerencias de Habilidades",
+      "description": "El usuario puede sugerir nuevas habilidades que no están en el catálogo. Requiere Bearer {{token}}.\n\nFLUJO:\n1. POST /portfolio/skill-suggestions → sugiere la habilidad (queda en estado 'pending')\n2. La habilidad aparece en GET /portfolio/skills con status='pending' (solo visible para el propio usuario)\n3. El admin la aprueba o rechaza desde /admin/skill-suggestions\n4. Si se aprueba: la habilidad se agrega al catálogo y al portfolio del usuario\n5. Si se rechaza: la sugerencia desaparece del portfolio\n\nREGLAS de validación:\n- category: debe ser una categoría ya existente (tecnica o blanda)\n- name: no debe existir ya en el catálogo\n- level: tecnica → basico|intermedio|avanzado / blanda → en_formacion|desarrollada|fortalecida\n- justification: opcional, máx 500 chars",
+      "item": [
+        {
+          "name": "Sugerir Nueva Habilidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "  pm.collectionVariables.set('suggestion_id', json.data.id);",
+                  "  console.log('suggestion_id guardado: ' + json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/portfolio/skill-suggestions", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","skill-suggestions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"tecnica\",\n  \"category\": \"Frameworks & Librerías\",\n  \"name\": \"Bun\",\n  \"level\": \"basico\",\n  \"justification\": \"Lo uso en mi trabajo actual y no está en el catálogo.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Sugiere una nueva habilidad. Queda en estado 'pending' y aparece en el portfolio del usuario con badge de pendiente.\n\nCampos:\n- type: tecnica | blanda\n- category: debe ser una categoría existente para ese type\n- name: nombre de la habilidad (no debe existir ya en el catálogo)\n- level: tecnica → basico|intermedio|avanzado / blanda → en_formacion|desarrollada|fortalecida\n- justification: (opcional) motivo de la sugerencia, máx 500 chars\n\nGuarda suggestion_id automáticamente."
+          }
+        }
+      ]
+    },
+    {
       "name": "Admin — Usuarios",
       "description": "Gestión de usuarios. Requiere Bearer {{admin_token}} (login con admin@portfolio.test).",
       "item": [
@@ -792,6 +832,61 @@
               "options": { "raw": { "language": "json" } }
             },
             "description": "Agrega una nueva skill al catálogo.\n\n- name: nombre de la skill (se aplica strip_tags)\n- category: DEBE ser una categoría ya existente (ver GET /admin/skills/categories)\n\nEl type se deriva automáticamente de la categoría seleccionada.\n\nErrores:\n- 422 si category no existe: 'The selected category does not exist. You cannot create new categories.'\n- 422 si name ya existe en esa categoría: 'A skill with this name already exists in the selected category.'"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Sugerencias de Habilidades",
+      "description": "Gestión de sugerencias de habilidades enviadas por usuarios. Requiere Bearer {{admin_token}}.\n\nFLUJO:\n1. GET /admin/skill-suggestions → ver sugerencias pendientes\n2. PATCH /approve → aprueba: crea la skill en el catálogo y la agrega al portfolio del usuario\n3. PATCH /reject → rechaza: la sugerencia desaparece del portfolio del usuario\n\nFiltros en GET: ?status=pending|approved|rejected (default: pending)",
+      "item": [
+        {
+          "name": "Listar Sugerencias (pendientes)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/skill-suggestions?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","skill-suggestions"],
+              "query": [{ "key": "status", "value": "pending", "description": "pending | approved | rejected" }]
+            },
+            "description": "Lista sugerencias paginadas. Por defecto muestra las pendientes.\n\nRespuesta incluye: id, type, category, name, level, justification, status, user (id, name, email), created_at."
+          }
+        },
+        {
+          "name": "Aprobar Sugerencia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/skill-suggestions/{{suggestion_id}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","skill-suggestions","{{suggestion_id}}","approve"]
+            },
+            "description": "Aprueba la sugerencia:\n1. Crea la skill en el catálogo (o reutiliza si ya existe con ese nombre)\n2. Agrega la skill al portfolio del usuario con el nivel que eligió\n3. La habilidad ya aparece como 'approved' en el portfolio público del usuario"
+          }
+        },
+        {
+          "name": "Rechazar Sugerencia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/skill-suggestions/{{suggestion_id}}/reject",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","skill-suggestions","{{suggestion_id}}","reject"]
+            },
+            "description": "Rechaza la sugerencia. La habilidad pendiente desaparece del portfolio del usuario."
           }
         }
       ]
