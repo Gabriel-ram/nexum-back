@@ -13,8 +13,14 @@ class UpdateSkillRequest extends FormRequest
 
     public function rules(): array
     {
+        $portfolioSkill = $this->route('portfolioSkill');
+        $isBlanda       = $portfolioSkill && $portfolioSkill->skill->type === 'blanda';
+
         return [
-            'level' => ['required', 'string', 'in:basico,intermedio,avanzado'],
+            'level' => ['required', 'string', $isBlanda
+                ? 'in:en_formacion,desarrollada,fortalecida'
+                : 'in:basico,intermedio,avanzado',
+            ],
         ];
     }
 }

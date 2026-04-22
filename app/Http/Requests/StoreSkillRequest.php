@@ -17,7 +17,7 @@ class StoreSkillRequest extends FormRequest
     {
         return [
             'skill_id' => ['required', 'integer', 'exists:skills,id'],
-            'level'    => ['nullable', 'string', 'in:basico,intermedio,avanzado'],
+            'level'    => ['nullable', 'string', 'in:basico,intermedio,avanzado,en_formacion,desarrollada,fortalecida'],
         ];
     }
 
@@ -34,12 +34,12 @@ class StoreSkillRequest extends FormRequest
                 return;
             }
 
-            if ($skill->type === 'tecnica' && ! $this->level) {
+            if ($skill->type === 'tecnica' && ! in_array($this->level, ['basico', 'intermedio', 'avanzado'])) {
                 $validator->errors()->add('level', 'El nivel es obligatorio para habilidades técnicas (basico, intermedio, avanzado).');
             }
 
-            if ($skill->type === 'blanda' && $this->level) {
-                $validator->errors()->add('level', 'Las habilidades blandas no tienen nivel.');
+            if ($skill->type === 'blanda' && ! in_array($this->level, ['en_formacion', 'desarrollada', 'fortalecida'])) {
+                $validator->errors()->add('level', 'El nivel es obligatorio para habilidades blandas (en_formacion, desarrollada, fortalecida).');
             }
         });
     }

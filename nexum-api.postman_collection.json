@@ -548,7 +548,7 @@
     },
     {
       "name": "Habilidades del Portfolio",
-      "description": "Gestión de habilidades del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: Portfolio creado.\n\nTipos:\n- tecnica: requieren level (basico | intermedio | avanzado)\n- blanda: no tienen level\n\nSoft delete: DELETE desactiva (is_active=false). Si se agrega la misma skill desactivada, se reactiva automáticamente.",
+      "description": "Gestión de habilidades del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: Portfolio creado.\n\nTipos:\n- tecnica: requieren level (basico | intermedio | avanzado)\n- blanda: requieren level (en_formacion | desarrollada | fortalecida)\n\nSoft delete: DELETE desactiva (is_active=false). Si se agrega la misma skill desactivada, se reactiva automáticamente.",
       "item": [
         {
           "name": "Catálogo Completo de Skills",
@@ -634,14 +634,14 @@
             "url": { "raw": "{{base_url}}/api/v1/portfolio/skills", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","skills"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"skill_id\": 80\n}",
+              "raw": "{\n  \"skill_id\": 80,\n  \"level\": \"en_formacion\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Agrega una skill blanda. NO envíes level (se ignora). Obtén el skill_id del catálogo, sección 'blanda'."
+            "description": "Agrega una skill blanda. level es obligatorio (en_formacion | desarrollada | fortalecida). Obtén el skill_id del catálogo, sección 'blanda'."
           }
         },
         {
-          "name": "Editar Nivel de Habilidad Técnica",
+          "name": "Editar Nivel de Habilidad",
           "request": {
             "method": "PUT",
             "header": [
@@ -658,7 +658,8 @@
               "mode": "raw",
               "raw": "{\n  \"level\": \"intermedio\"\n}",
               "options": { "raw": { "language": "json" } }
-            }
+            },
+            "description": "Actualiza el nivel de una habilidad.\n\n- Técnica: basico | intermedio | avanzado\n- Blanda: en_formacion | desarrollada | fortalecida\n\nEl endpoint detecta automáticamente el tipo y valida el set correcto."
           }
         },
         {

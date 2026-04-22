@@ -89,7 +89,7 @@ class SkillController extends Controller
             // Reactivate previously deactivated skill
             $existing->update([
                 'is_active' => true,
-                'level'     => $skill->type === 'tecnica' ? $validated['level'] : null,
+                'level'     => $validated['level'],
             ]);
 
             return new SkillResource($existing->fresh()->load('skill'));
@@ -98,7 +98,7 @@ class SkillController extends Controller
         $portfolioSkill = PortfolioSkill::create([
             'portfolio_id' => $portfolio->id,
             'skill_id'     => $skill->id,
-            'level'        => $skill->type === 'tecnica' ? $validated['level'] : null,
+            'level'        => $validated['level'],
             'is_active'    => true,
         ]);
 
@@ -106,7 +106,7 @@ class SkillController extends Controller
     }
 
     /**
-     * Updates the level of a technical skill. Soft skills cannot be edited.
+     * Updates the level of a skill (technical or soft).
      */
     public function update(UpdateSkillRequest $request, PortfolioSkill $portfolioSkill): SkillResource|JsonResponse
     {
@@ -116,10 +116,6 @@ class SkillController extends Controller
 
         if (! $portfolioSkill->is_active) {
             abort(422, 'Cannot edit an inactive skill.');
-        }
-
-        if ($portfolioSkill->skill->type === 'blanda') {
-            abort(422, 'Las habilidades blandas no tienen nivel y no se pueden editar.');
         }
 
         $portfolioSkill->update(['level' => $request->validated()['level']]);
