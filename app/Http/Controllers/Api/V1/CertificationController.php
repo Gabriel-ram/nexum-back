@@ -25,7 +25,16 @@ class CertificationController extends Controller
             return CertificationResource::collection(collect());
         }
 
-        return CertificationResource::collection($portfolio->certifications);
+        if ($request->boolean('include_inactive')) {
+            $certifications = Certification::where('portfolio_id', $portfolio->id)
+                ->where('is_active', false)
+                ->orderByDesc('issue_date')
+                ->get();
+        } else {
+            $certifications = $portfolio->certifications;
+        }
+
+        return CertificationResource::collection($certifications);
     }
 
     public function store(StoreCertificationRequest $request): CertificationResource|JsonResponse
@@ -56,6 +65,10 @@ class CertificationController extends Controller
     {
         if ($certification->portfolio_id !== $request->user()->portfolio?->id) {
             abort(403);
+        }
+
+        if (! $certification->is_active) {
+            return response()->json(['message' => 'Cannot update a deactivated certification.'], 403);
         }
 
         $validated = $request->validated();
@@ -90,6 +103,10 @@ class CertificationController extends Controller
             abort(403);
         }
 
+        if (! $certification->is_active) {
+            return response()->json(['message' => 'Cannot update a deactivated certification.'], 403);
+        }
+
         $request->validate([
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
@@ -106,17 +123,22 @@ class CertificationController extends Controller
         return new CertificationResource($certification->fresh());
     }
 
-    public function destroy(Request $request, Certification $certification): JsonResponse
+    public function toggle(Request $request, Certification $certification): JsonResponse
     {
         if ($certification->portfolio_id !== $request->user()->portfolio?->id) {
             abort(403);
         }
 
-        $this->cloudinary->deleteCertificationImage($certification->cloudinary_public_id);
+        $certification->update(['is_active' => ! $certification->is_active]);
 
-        $certification->delete();
+        $message = $certification->is_active
+            ? 'Certification activated successfully.'
+            : 'Certification deactivated successfully.';
 
-        return response()->json(['message' => 'Certification deleted successfully.'], 200);
+        return response()->json([
+            'message' => $message,
+            'data'    => new CertificationResource($certification->fresh()),
+        ]);
     }
 
     private function parseDate(string $date): string

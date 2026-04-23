@@ -438,10 +438,10 @@
     },
     {
       "name": "Certificaciones",
-      "description": "Gestión de certificaciones del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener portfolio creado.\n\nFechas en formato m/Y (ej: 04/2026).\nstore y update usan raw JSON. Solo updateImage usa form-data.\nDELETE elimina permanentemente y retorna 200 con mensaje.",
+      "description": "Gestión de certificaciones del portfolio. Requiere Bearer {{token}}.\n\nPREREQUISITO: El usuario debe tener portfolio creado.\n\nFechas en formato m/Y (ej: 04/2026).\nstore y update usan raw JSON. Solo updateImage usa form-data.\nNo hay DELETE — usar PATCH /toggle para activar/desactivar.",
       "item": [
         {
-          "name": "Listar Certificaciones",
+          "name": "Listar Certificaciones (activas)",
           "request": {
             "method": "GET",
             "header": [
@@ -449,7 +449,24 @@
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/api/v1/portfolio/certifications", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","certifications"] },
-            "description": "Lista todas las certificaciones del portfolio del usuario autenticado, ordenadas por issue_date descendente."
+            "description": "Lista las certificaciones activas (is_active=true) del usuario autenticado, ordenadas por issue_date descendente."
+          }
+        },
+        {
+          "name": "Listar Certificaciones (todas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/certifications?include_inactive=true",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","portfolio","certifications"],
+              "query": [{ "key": "include_inactive", "value": "true" }]
+            },
+            "description": "Lista todas las certificaciones del usuario (activas e inactivas) con ?include_inactive=true."
           }
         },
         {
@@ -479,10 +496,10 @@
             "url": { "raw": "{{base_url}}/api/v1/portfolio/certifications", "host": ["{{base_url}}"], "path": ["api","v1","portfolio","certifications"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"AWS Certified Solutions Architect\",\n  \"description\": \"Certificación oficial de Amazon Web Services para arquitectura de soluciones en la nube.\",\n  \"issuing_entity\": \"Amazon Web Services\",\n  \"issue_date\": \"03/2024\",\n  \"expiration_date\": \"03/2027\"\n}",
+              "raw": "{\n  \"name\": \"Curso de desarrollo web\",\n  \"description\": \"Nivel intermedio\",\n  \"issuing_entity\": \"Udemy\",\n  \"issue_date\": \"03/2024\",\n  \"expiration_date\": \"03/2027\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Crea una certificación. El certification_id se guarda automáticamente en {{certification_id}}.\n\nValidaciones:\n- name: obligatorio, máx 255 chars\n- description: opcional, máx 1000 chars\n- issuing_entity: obligatorio, máx 255 chars\n- issue_date: obligatorio, formato m/Y\n- expiration_date: opcional, formato m/Y, debe ser posterior a issue_date\n\nRetorna 201 Created. Para agregar imagen usa POST /{id}/image."
+            "description": "Crea una certificación sin imagen. El certification_id se guarda automáticamente en {{certification_id}}.\n\nValidaciones:\n- name: obligatorio, máx 255 chars\n- description: opcional, máx 1000 chars\n- issuing_entity: obligatorio, máx 255 chars\n- issue_date: obligatorio, formato m/Y\n- expiration_date: opcional, formato m/Y, debe ser posterior a issue_date\n\nRetorna 201 Created. Para agregar imagen usa POST /{id}/image."
           }
         },
         {
@@ -501,7 +518,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"AWS Certified Solutions Architect — Associate\",\n  \"description\": \"Certificación asociada de AWS para diseño de arquitecturas escalables y resilientes.\",\n  \"issuing_entity\": \"Amazon Web Services\",\n  \"issue_date\": \"03/2024\",\n  \"expiration_date\": \"06/2027\"\n}",
+              "raw": "{\n  \"name\": \"Curso de desarrollo web actualizado\",\n  \"description\": \"Nivel avanzado\",\n  \"issuing_entity\": \"Udemy\",\n  \"issue_date\": \"03/2024\",\n  \"expiration_date\": \"03/2027\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Actualiza name, description, issuing_entity, issue_date o expiration_date. Todos los campos son opcionales (sometimes).\n\nRetorna 403 si la certificación no pertenece al usuario."
@@ -530,19 +547,19 @@
           }
         },
         {
-          "name": "Eliminar Certificación",
+          "name": "Toggle Certificación",
           "request": {
-            "method": "DELETE",
+            "method": "PATCH",
             "header": [
               { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}",
+              "raw": "{{base_url}}/api/v1/portfolio/certifications/{{certification_id}}/toggle",
               "host": ["{{base_url}}"],
-              "path": ["api","v1","portfolio","certifications","{{certification_id}}"]
+              "path": ["api","v1","portfolio","certifications","{{certification_id}}","toggle"]
             },
-            "description": "Elimina permanentemente la certificación de la BD y borra su imagen de Cloudinary si tiene.\n\nRetorna 200 con { \"message\": \"Certification deleted successfully.\" }.\nRetorna 403 si la certificación no pertenece al usuario."
+            "description": "Invierte el estado is_active de la certificación (true↔false). Sin body.\n\nRespuesta 200:\n- Si quedó activa:   { \"message\": \"Certification activated successfully.\",   \"data\": {...} }\n- Si quedó inactiva: { \"message\": \"Certification deactivated successfully.\", \"data\": {...} }\n\nRetorna 403 si la certificación no pertenece al usuario."
           }
         }
       ]

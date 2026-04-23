@@ -98,7 +98,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/', [CertificationController::class, 'store']);
             Route::put('/{certification}', [CertificationController::class, 'update']);
             Route::post('/{certification}/image', [CertificationController::class, 'updateImage']);
-            Route::delete('/{certification}', [CertificationController::class, 'destroy']);
+            Route::patch('/{certification}/toggle', [CertificationController::class, 'toggle']);
         });
     });
 
