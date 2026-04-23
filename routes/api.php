@@ -125,7 +125,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/work-experiences', [WorkExperienceController::class, 'index']);
         Route::post('/work-experiences', [WorkExperienceController::class, 'store']);
         Route::put('/work-experiences/{id}', [WorkExperienceController::class, 'update']);
-        Route::delete('/work-experiences/{id}', [WorkExperienceController::class, 'destroy']);
+        Route::patch('/work-experiences/{id}/toggle', [WorkExperienceController::class, 'toggle']);
     });
 
 });

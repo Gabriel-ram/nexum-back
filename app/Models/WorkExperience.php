@@ -21,6 +21,7 @@ class WorkExperience extends Model
         'end_date',
         'description',
         'verification_url',
+        'is_active',
     ];
 
     protected $casts = [

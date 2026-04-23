@@ -982,7 +982,7 @@
       "description": "CRUD de experiencia laboral del usuario autenticado. Requiere Bearer {{token}}.\n\nFLUJO:\n1. GET /work-experiences       → listar experiencias existentes\n2. POST /work-experiences      → crear nueva experiencia (guarda work_experience_id)\n3. PUT /work-experiences/{id}  → editar experiencia\n4. DELETE /work-experiences/{id} → eliminar experiencia (físico)\n\nFORMATO DE FECHAS: YYYY-MM (ej. 2022-03). La BD almacena YYYY-MM-01 internamente.\nSKILLS: reutiliza GET /api/v1/projects/skills para obtener los IDs disponibles.",
       "item": [
         {
-          "name": "Listar Experiencias",
+          "name": "Listar Experiencias (activas)",
           "request": {
             "method": "GET",
             "header": [
@@ -994,7 +994,24 @@
               "host": ["{{base_url}}"],
               "path": ["api","v1","work-experiences"]
             },
-            "description": "Devuelve todas las experiencias laborales del usuario autenticado, ordenadas por start_date descendente. Incluye las skills asociadas.\n\nFechas en formato YYYY-MM. end_date null indica trabajo actual."
+            "description": "Devuelve las experiencias laborales activas (is_active=true) del usuario autenticado, ordenadas por start_date descendente. Incluye las skills asociadas.\n\nFechas en formato YYYY-MM. end_date null indica trabajo actual."
+          }
+        },
+        {
+          "name": "Listar Experiencias (inactivas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/work-experiences?status=inactive",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","work-experiences"],
+              "query": [{ "key": "status", "value": "inactive" }]
+            },
+            "description": "Devuelve las experiencias laborales inactivas (is_active=false) del usuario autenticado."
           }
         },
         {
@@ -1054,19 +1071,19 @@
           }
         },
         {
-          "name": "Eliminar Experiencia",
+          "name": "Toggle Experiencia",
           "request": {
-            "method": "DELETE",
+            "method": "PATCH",
             "header": [
               { "key": "Accept",        "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/work-experiences/{{work_experience_id}}",
+              "raw": "{{base_url}}/api/v1/work-experiences/{{work_experience_id}}/toggle",
               "host": ["{{base_url}}"],
-              "path": ["api","v1","work-experiences","{{work_experience_id}}"]
+              "path": ["api","v1","work-experiences","{{work_experience_id}}","toggle"]
             },
-            "description": "Elimina físicamente la experiencia laboral. Las skills de la pivot se limpian automáticamente por CASCADE.\n\nDevuelve 404 si la experiencia no pertenece al usuario autenticado.\n\nResponse: { \"message\": \"Work experience deleted successfully.\" }"
+            "description": "Invierte el estado is_active de la experiencia laboral (true↔false). Sin body.\n\nDevuelve 404 si la experiencia no pertenece al usuario autenticado.\n\nResponse: { \"message\": \"Work experience updated successfully.\", \"is_active\": false }"
           }
         }
       ]

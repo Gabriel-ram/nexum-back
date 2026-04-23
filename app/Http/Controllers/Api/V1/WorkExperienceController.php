@@ -14,7 +14,10 @@ class WorkExperienceController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
+        $isActive = $request->input('status') === 'inactive' ? false : true;
+
         $experiences = WorkExperience::where('user_id', $request->user()->id)
+            ->where('is_active', $isActive)
             ->with('skills')
             ->orderByDesc('start_date')
             ->get();
@@ -55,6 +58,10 @@ class WorkExperienceController extends Controller
             return response()->json(['message' => 'Work experience not found.'], 404);
         }
 
+        if (! $experience->is_active) {
+            return response()->json(['message' => 'Cannot edit an inactive work experience.'], 422);
+        }
+
         $validated = $request->validated();
         $skillIds  = array_key_exists('skill_ids', $validated) ? $validated['skill_ids'] : null;
         unset($validated['skill_ids']);
@@ -73,7 +80,7 @@ class WorkExperienceController extends Controller
         return new WorkExperienceResource($experience->load('skills'));
     }
 
-    public function destroy(Request $request, $id): JsonResponse
+    public function toggle(Request $request, $id): JsonResponse
     {
         $experience = WorkExperience::where('id', $id)
             ->where('user_id', $request->user()->id)
@@ -83,8 +90,11 @@ class WorkExperienceController extends Controller
             return response()->json(['message' => 'Work experience not found.'], 404);
         }
 
-        $experience->delete();
+        $experience->update(['is_active' => ! $experience->is_active]);
 
-        return response()->json(['message' => 'Work experience deleted successfully.']);
+        return response()->json([
+            'message'   => 'Work experience updated successfully.',
+            'is_active' => $experience->is_active,
+        ]);
     }
 }

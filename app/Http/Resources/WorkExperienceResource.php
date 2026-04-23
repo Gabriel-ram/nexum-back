@@ -19,6 +19,7 @@ class WorkExperienceResource extends JsonResource
             'end_date'         => $this->end_date?->format('Y-m'),
             'description'      => $this->description,
             'verification_url' => $this->verification_url,
+            'is_active'        => $this->is_active,
             'skills'           => $this->whenLoaded('skills', fn () => $this->skills->map(fn ($skill) => [
                 'id'       => $skill->id,
                 'name'     => $skill->name,
