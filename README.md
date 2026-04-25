@@ -27,6 +27,7 @@ API REST para la plataforma de portfolios profesionales **Nexum**. Construida co
 | Laravel Sanctum | 4.x | Autenticación por tokens (API stateless) |
 | Spatie Permission | 6.x | Roles y permisos (`admin`, `professional`) |
 | Spatie Activitylog | 4.x | Auditoría de cambios en modelos |
+| Cloudinary PHP SDK | 2.x | Almacenamiento de imágenes y PDFs |
 
 **Drivers de infraestructura** (sin dependencias externas):
 
@@ -35,7 +36,7 @@ API REST para la plataforma de portfolios profesionales **Nexum**. Construida co
 | Sesiones | `database` |
 | Cola de trabajos | `database` |
 | Caché | `database` |
-| Storage de imágenes | `local` (`storage/app/public`) |
+| Storage de archivos | Cloudinary (avatares, certificaciones, archivos de proyectos) |
 
 ---
 
@@ -62,6 +63,24 @@ En tu `php.ini`, verificá que esta línea esté descomentada (sin el `;` inicia
 
 ```ini
 extension=pdo_pgsql
+```
+
+### Aumentar límites de subida de archivos (OBLIGATORIO)
+
+El proyecto permite subir PDFs de hasta 16MB. PHP por defecto limita los uploads a 2MB, lo que causará errores al subir archivos grandes. En tu `php.ini` (ubicalo con `php --ini`) cambiá estas líneas:
+
+```ini
+upload_max_filesize = 20M
+post_max_size = 25M
+```
+
+> `post_max_size` siempre debe ser mayor que `upload_max_filesize`.
+
+Para el servidor Apache de la Universidad (despliegue final), se puede usar `.htaccess` en lugar de editar `php.ini`:
+
+```apache
+php_value upload_max_filesize 20M
+php_value post_max_size 25M
 ```
 
 Después de editar, reiniciá el servidor PHP (Laragon, XAMPP, etc.).
@@ -182,7 +201,15 @@ FRONTEND_URL=http://localhost:5173   # URL del frontend React
 
 # ─── Usuario administrador por defecto ─────────────────────────
 ADMIN_PASSWORD=Admin1234!            # contraseña del usuario admin@nexun.com
+
+# ─── Cloudinary (almacenamiento de imágenes y PDFs) ────────────
+CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME   # solicitar al líder del equipo
+CLOUDINARY_CLOUD_NAME=              # cloud name de la cuenta
+CLOUDINARY_API_KEY=                 # API key
+CLOUDINARY_API_SECRET=              # API secret
 ```
+
+> La `CLOUDINARY_URL` y sus credenciales se obtienen desde el dashboard de Cloudinary en **Dashboard → API Keys → Copy URL**. Solicitarlas al líder del equipo — no se suben al repositorio.
 
 ### Configuración de correo (Gmail SMTP)
 
@@ -329,6 +356,146 @@ avatar: [archivo .jpg/.jpeg/.png/.webp, máx 2MB]
   }
 }
 ```
+
+---
+
+### Certificaciones (`/portfolio/certifications`)
+
+Todos requieren 🔒 (`Authorization: Bearer {token}`). Las fechas se envían y reciben en formato `m/Y` (ej: `04/2026`). `store` y `update` usan JSON. Solo `updateImage` usa `multipart/form-data`. No hay DELETE — las certificaciones se activan/desactivan con `PATCH /toggle`.
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/portfolio/certifications` | 🔒 | Lista certificaciones activas (`is_active=true`). Con `?include_inactive=true` devuelve todas. |
+| `POST` | `/portfolio/certifications` | 🔒 | Crea una certificación. JSON. Sin imagen — usá `POST /{id}/image` para eso. Devuelve 201. |
+| `PUT` | `/portfolio/certifications/{id}` | 🔒 | Actualiza campos. JSON. Todos opcionales (`sometimes`). |
+| `POST` | `/portfolio/certifications/{id}/image` | 🔒 | Sube o reemplaza imagen en Cloudinary. `multipart/form-data`, campo `image`. Máx 2MB. |
+| `PATCH` | `/portfolio/certifications/{id}/toggle` | 🔒 | Invierte `is_active`. Devuelve 200 con el recurso actualizado y mensaje. |
+
+> Los endpoints con `{id}` devuelven 403 si la certificación no pertenece al usuario autenticado.
+
+**Ejemplo — POST /portfolio/certifications (JSON):**
+```json
+{
+  "name": "Curso de desarrollo web",
+  "description": "Nivel intermedio",
+  "issuing_entity": "Udemy",
+  "issue_date": "03/2024",
+  "expiration_date": "03/2027"
+}
+```
+
+**Ejemplo — PUT /portfolio/certifications/{id} (JSON):**
+```json
+{
+  "name": "Curso de desarrollo web actualizado",
+  "description": "Nivel avanzado",
+  "issuing_entity": "Udemy",
+  "issue_date": "03/2024",
+  "expiration_date": "03/2027"
+}
+```
+
+**Ejemplo — POST /portfolio/certifications/{id}/image (form-data):**
+```
+image: [archivo .jpg/.jpeg/.png/.webp, máx 2MB — obligatorio]
+```
+
+**Respuesta — GET (lista activas):**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Curso de desarrollo web",
+      "description": "Nivel intermedio",
+      "issuing_entity": "Udemy",
+      "issue_date": "03/2024",
+      "expiration_date": "03/2027",
+      "image_url": "https://res.cloudinary.com/tu-cloud/image/upload/v1/nexum/certifications/abc123.jpg",
+      "is_active": true,
+      "created_at": "2026-04-16T10:00:00.000000Z",
+      "updated_at": "2026-04-16T10:00:00.000000Z"
+    }
+  ]
+}
+```
+
+**Respuesta — PATCH /toggle:**
+```json
+{
+  "message": "Certification deactivated successfully.",
+  "data": { "id": 1, "is_active": false, "..." : "..." }
+}
+```
+
+> `cloudinary_public_id` nunca se expone en la respuesta — es de uso interno para gestión de imágenes en Cloudinary.
+
+---
+
+### Proyectos (`/projects`)
+
+Todos requieren 🔒. El proyecto se crea primero y los archivos se suben en un segundo paso. Los archivos se almacenan en Cloudinary — el servidor no guarda nada en disco.
+
+**Límites de archivos:**
+| Tipo | Límite individual | Límite total por usuario |
+|---|---|---|
+| Imágenes (jpg, jpeg, png, webp) | 2 MB | — |
+| PDFs | 16 MB | — |
+| Archivos por proyecto | — | 10 (imágenes + PDFs combinados) |
+| Almacenamiento total (todos los proyectos) | — | 700 MB |
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/projects` | 🔒 | Lista proyectos activos del usuario. Incluye `category`, `skills` y `files`. |
+| `POST` | `/projects` | 🔒 | Crea un proyecto. JSON. Devuelve 404 si no tiene portfolio. |
+| `PUT` | `/projects/{id}` | 🔒 | Actualiza datos del proyecto. JSON. |
+| `DELETE` | `/projects/{id}` | 🔒 | Archiva el proyecto (`archived=true`). No elimina físicamente. |
+| `GET` | `/projects/{id}/files` | 🔒 | Lista los archivos (imágenes y PDFs) del proyecto. |
+| `POST` | `/projects/{id}/files` | 🔒 | Sube uno o más archivos. `multipart/form-data`, campo `files[]`. |
+| `DELETE` | `/projects/{id}/files/{fileId}` | 🔒 | Elimina el archivo del proyecto y lo borra de Cloudinary. |
+
+**Ejemplo — POST /projects (JSON):**
+```json
+{
+  "title": "Mi Portfolio App",
+  "description": "Aplicación full-stack para gestionar mi portfolio profesional.",
+  "project_url": "https://github.com/mi-usuario/portfolio-app",
+  "category_id": 1,
+  "skill_ids": [1, 18, 7]
+}
+```
+
+**Ejemplo — POST /projects/{id}/files (form-data):**
+```
+files[]: [imagen .jpg/.png/.webp, máx 2MB]
+files[]: [archivo .pdf, máx 16MB]
+```
+
+> No agregar `Content-Type` manualmente al subir archivos — Postman lo genera automáticamente.
+
+**Respuesta — GET /projects/{id}/files:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "type": "image",
+      "url": "https://res.cloudinary.com/tu-cloud/image/upload/v1/nexum/projects/images/abc.jpg",
+      "original_name": "screenshot.jpg",
+      "order": 0
+    },
+    {
+      "id": 2,
+      "type": "pdf",
+      "url": "https://res.cloudinary.com/tu-cloud/raw/upload/v1/nexum/projects/pdfs/doc.pdf",
+      "original_name": "documentacion.pdf",
+      "order": 1
+    }
+  ]
+}
+```
+
+> Los archivos también vienen incluidos en la respuesta de `GET /projects`, `POST /projects` y `PUT /projects/{id}` dentro del campo `files`.
 
 ---
 

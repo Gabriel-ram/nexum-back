@@ -12,6 +12,9 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             AdminUserSeeder::class,
             ProfessionalUserSeeder::class,
+            SkillSeeder::class,
+            ProjectCategorySeeder::class,
+            ProjectSeeder::class,      // Depende de SkillSeeder y ProjectCategorySeeder
         ]);
     }
 }
