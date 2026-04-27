@@ -737,6 +737,49 @@
       ]
     },
     {
+      "name": "Sugerencias de Categorías",
+      "description": "El usuario puede sugerir nuevas categorías de proyecto que no están en el listado. Requiere Bearer {{token}}.\n\nFLUJO:\n1. POST /projects/{project}/category-suggestions → sugiere la categoría para un proyecto específico (queda en estado 'pending')\n2. El admin la aprueba o rechaza desde /admin/category-suggestions\n3. Si se aprueba: la categoría se crea en el catálogo y se asigna al proyecto\n4. Si se rechaza: el proyecto sigue sin categoría asignada\n\nREGLAS de validación:\n- name: no debe existir ya en el catálogo de categorías\n- name: no debe tener otra sugerencia pendiente con el mismo nombre\n- Un proyecto solo puede tener UNA sugerencia pending a la vez\n- justification: opcional, máx 500 chars",
+      "item": [
+        {
+          "name": "Sugerir Nueva Categoría",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "  pm.collectionVariables.set('suggestion_id', json.data.id);",
+                  "  console.log('suggestion_id guardado: ' + json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Authorization","value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/category-suggestions",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","projects","{{project_id}}","category-suggestions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Inteligencia Artificial\",\n  \"justification\": \"No encuentro esta categoría en el listado.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Sugiere una nueva categoría para un proyecto. Queda en estado 'pending' hasta que el admin la revise.\n\nCampos:\n- name: nombre de la categoría (no debe existir ya en el catálogo, máx 100 chars)\n- justification: (opcional) motivo de la sugerencia, máx 500 chars\n\nErrores:\n- 404 si el proyecto no existe o no pertenece al usuario\n- 422 si ya existe la categoría en el catálogo\n- 422 si ya hay una sugerencia pending con ese nombre\n- 422 si el proyecto ya tiene una sugerencia pending\n\nGuarda suggestion_id automáticamente."
+          }
+        }
+      ]
+    },
+    {
       "name": "Admin — Usuarios",
       "description": "Gestión de usuarios. Requiere Bearer {{admin_token}} (login con admin@portfolio.test).",
       "item": [
@@ -904,6 +947,64 @@
               "path": ["api","v1","admin","skill-suggestions","{{suggestion_id}}","reject"]
             },
             "description": "Rechaza la sugerencia. La habilidad pendiente desaparece del portfolio del usuario."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Sugerencias de Categorías",
+      "description": "Gestión de sugerencias de categorías de proyecto enviadas por usuarios. Requiere Bearer {{admin_token}}.\n\nFLUJO:\n1. GET /admin/category-suggestions → ver sugerencias pendientes\n2. PATCH /approve → aprueba: crea la categoría en el catálogo y la asigna al proyecto\n3. PATCH /reject → rechaza: el proyecto sigue sin categoría asignada\n\nFiltros en GET: ?status=pending|approved|rejected (default: pending)",
+      "item": [
+        {
+          "name": "Listar Sugerencias (pendientes)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/category-suggestions?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","category-suggestions"],
+              "query": [
+                { "key": "status",   "value": "pending", "description": "pending | approved | rejected" },
+                { "key": "per_page", "value": "20",      "description": "Máx 100, default 20" }
+              ]
+            },
+            "description": "Lista sugerencias de categorías paginadas. Por defecto muestra las pendientes.\n\nRespuesta incluye: id, name, justification, status, reviewed_at, reviewed_by, category_id, project (id, title), user (id, name, email), created_at."
+          }
+        },
+        {
+          "name": "Aprobar Sugerencia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/category-suggestions/{{suggestion_id}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","category-suggestions","{{suggestion_id}}","approve"]
+            },
+            "description": "Aprueba la sugerencia de categoría:\n1. Crea la categoría en el catálogo con is_active=true (o reutiliza si ya existe con ese nombre)\n2. Asigna la categoría al proyecto (projects.category_id)\n3. La sugerencia queda como 'approved'"
+          }
+        },
+        {
+          "name": "Rechazar Sugerencia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/category-suggestions/{{suggestion_id}}/reject",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","admin","category-suggestions","{{suggestion_id}}","reject"]
+            },
+            "description": "Rechaza la sugerencia. El proyecto sigue sin categoría asignada."
           }
         }
       ]
