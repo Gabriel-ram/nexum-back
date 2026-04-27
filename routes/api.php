@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AdminCategorySuggestionController;
+use App\Http\Controllers\Api\V1\CategorySuggestionController;
 use App\Http\Controllers\Api\V1\WorkExperienceController;
 use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\Admin\ProjectCategoryController as AdminProjectCategoryController;
@@ -68,6 +70,11 @@ Route::prefix('v1')->group(function () {
         Route::patch('/skill-suggestions/{suggestion}/approve', [AdminSkillSuggestionController::class, 'approve']);
         Route::patch('/skill-suggestions/{suggestion}/reject', [AdminSkillSuggestionController::class, 'reject']);
 
+        // Sugerencias de categorías de proyecto
+        Route::get('/category-suggestions', [AdminCategorySuggestionController::class, 'index']);
+        Route::patch('/category-suggestions/{suggestion}/approve', [AdminCategorySuggestionController::class, 'approve']);
+        Route::patch('/category-suggestions/{suggestion}/reject', [AdminCategorySuggestionController::class, 'reject']);
+
         // Gestión de categorías de proyecto
         Route::post('/project-categories', [ProjectCategoryController::class, 'store']);
         Route::get('/project-categories', [AdminProjectCategoryController::class, 'index']);
@@ -110,6 +117,9 @@ Route::prefix('v1')->group(function () {
         // Skills técnicas disponibles para asociar a proyectos
         // Debe ir antes de /projects/{project} para que 'skills' no se tome como ID
         Route::get('/projects/skills', [ProjectController::class, 'skillsCatalog']);
+
+        // Sugerencias de categorías de proyecto (profesional)
+        Route::post('/projects/{project}/category-suggestions', [CategorySuggestionController::class, 'store']);
 
         Route::get('/projects', [ProjectController::class, 'index']);
         Route::post('/projects', [ProjectController::class, 'store']);
