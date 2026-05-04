@@ -34,6 +34,21 @@ class PortfolioController extends Controller
 
         $portfolioFields = collect($validated)->except(['first_name', 'last_name'])->all();
 
+        // Establecer valores por defecto para campos de privacidad si no se envían
+        $privacyDefaults = [
+            'global_privacy' => 'public',
+            'show_projects' => true,
+            'show_skills' => true,
+            'show_experience' => true,
+            'show_certifications' => true,
+        ];
+
+        foreach ($privacyDefaults as $field => $default) {
+            if (! array_key_exists($field, $portfolioFields)) {
+                $portfolioFields[$field] = $default;
+            }
+        }
+
         $portfolio = Portfolio::updateOrCreate(
             ['user_id' => $request->user()->id],
             $portfolioFields
@@ -51,7 +66,7 @@ class PortfolioController extends Controller
         }
 
         $result = cloudinary()->uploadApi()->upload($request->file('avatar')->getRealPath(), [
-            'folder' => 'nexun/avatars',
+            'folder' => 'nexum/avatars',
         ]);
 
         $portfolio = Portfolio::updateOrCreate(

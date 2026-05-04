@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AdminCategorySuggestionController;
 use App\Http\Controllers\Api\V1\CategorySuggestionController;
 use App\Http\Controllers\Api\V1\WorkExperienceController;
 use App\Http\Controllers\Api\V1\ActivityLogController;
+use App\Http\Controllers\Api\V1\PublicPortfolioController;
 use App\Http\Controllers\Api\V1\Admin\ProjectCategoryController as AdminProjectCategoryController;
 use App\Http\Controllers\Api\V1\AdminSkillController;
 use App\Http\Controllers\Api\V1\AdminSkillSuggestionController;
@@ -26,6 +27,9 @@ Route::prefix('v1')->group(function () {
 
     // Public: categorías de proyecto (para el selector del modal de creación de proyectos)
     Route::get('/project-categories', [ProjectCategoryController::class, 'index']);
+
+    // Public: visualización de portafolios individuales
+    Route::get('/portfolios/{portfolio}', [PublicPortfolioController::class, 'show']);
 
     Route::prefix('auth')->group(function () {
 

@@ -13,6 +13,7 @@
     { "key": "project_file_id",    "value": "", "type": "string" },
     { "key": "certification_id",   "value": "", "type": "string" },
     { "key": "portfolio_skill_id",   "value": "", "type": "string" },
+    { "key": "portfolio_id",        "value": "", "type": "string" },
     { "key": "work_experience_id",   "value": "", "type": "string" },
     { "key": "suggestion_id",        "value": "", "type": "string" }
   ],
@@ -28,6 +29,53 @@
             "header": [{ "key": "Accept", "value": "application/json" }],
             "url": { "raw": "{{base_url}}/api/v1/featured-profiles", "host": ["{{base_url}}"], "path": ["api","v1","featured-profiles"] },
             "description": "3 perfiles destacados para la landing page + estadísticas globales (total_users, total_projects). No requiere autenticación."
+          }
+        },
+        {
+          "name": "Get Portfolio ID (for testing)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { 
+              "raw": "{{base_url}}/api/v1/portfolio", 
+              "host": ["{{base_url}}"], 
+              "path": ["api","v1","portfolio"] 
+            },
+            "description": "Obtiene el portfolio del usuario autenticado y guarda el ID automáticamente en {{portfolio_id}}. Requiere login previo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('portfolio_id', response.id);",
+                  "    pm.collectionVariables.set('user_name', response.user.first_name + ' ' + response.user.last_name);",
+                  "    console.log('Portfolio ID guardado:', response.id);",
+                  "} else {",
+                  "    console.log('Error obteniendo portfolio:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "View Public Portfolio",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { 
+              "raw": "{{base_url}}/api/v1/portfolios/{{portfolio_id}}", 
+              "host": ["{{base_url}}"], 
+              "path": ["api","v1","portfolios","{{portfolio_id}}"] 
+            },
+            "description": "Visualización pública de un portafolio individual. Respeta la configuración de privacidad del usuario. Si el perfil es privado, devuelve 404. No requiere autenticación.\n\n**PREREQUISITO:** Ejecutar primero 'Get Portfolio ID' para obtener un {{portfolio_id}} válido.\n\n**Casos de prueba:**\n1. Perfil público con todas las secciones visibles (default)\n2. Perfil público con secciones ocultas (modificar en PUT /portfolio)\n3. Perfil privado (global_privacy: 'private') → debe devolver 404\n\n**Body:** No requiere body (GET request)"
           }
         }
       ]
@@ -228,10 +276,10 @@
             "url": { "raw": "{{base_url}}/api/v1/portfolio", "host": ["{{base_url}}"], "path": ["api","v1","portfolio"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"García\",\n  \"profession\": \"Full Stack Developer\",\n  \"biography\": \"Desarrollador con experiencia en Laravel y Vue.js.\",\n  \"phone\": \"+34 600 000 000\",\n  \"location\": \"Madrid, España\",\n  \"linkedin_url\": \"https://www.linkedin.com/in/mi-perfil\",\n  \"github_url\": \"https://github.com/mi-usuario\"\n}",
+              "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"García\",\n  \"profession\": \"Full Stack Developer\",\n  \"biography\": \"Desarrollador con experiencia en Laravel y Vue.js.\",\n  \"phone\": \"+34 600 000 000\",\n  \"location\": \"Madrid, España\",\n  \"linkedin_url\": \"https://www.linkedin.com/in/mi-perfil\",\n  \"github_url\": \"https://github.com/mi-usuario\",\n  \"global_privacy\": \"public\",\n  \"show_projects\": true,\n  \"show_skills\": true,\n  \"show_experience\": true,\n  \"show_certifications\": true\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Crea o actualiza el portfolio (updateOrCreate). Debe ejecutarse antes de crear proyectos o certificaciones."
+            "description": "Crea o actualiza el portfolio (updateOrCreate). Debe ejecutarse antes de crear proyectos o certificaciones.\n\nCampos de privacidad:\n- global_privacy: 'public' o 'private' (default: 'public'). Si es 'private', oculta todo el perfil\n- show_projects: boolean (default: true). Muestra/oculta proyectos\n- show_skills: boolean (default: true). Muestra/oculta habilidades\n- show_experience: boolean (default: true). Muestra/oculta experiencia laboral\n- show_certifications: boolean (default: true). Muestra/oculta certificaciones\n\nSi global_privacy es 'private', todos los demás campos de privacidad son ignorados."
           }
         },
         {
