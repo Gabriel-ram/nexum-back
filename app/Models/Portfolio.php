@@ -74,16 +74,16 @@ class Portfolio extends Model
     {
         // Si el perfil es completamente privado, nada es visible
         if ($this->global_privacy === 'private') {
-            return false;
+        return false;
         }
 
         // Si el perfil es público, verificar configuración específica de la sección
         return match ($section) {
-            'projects' => $this->show_projects,
-            'skills' => $this->show_skills,
-            'experience' => $this->show_experience,
-            'certifications' => $this->show_certifications,
-            default => false,
+            'projects'       => (bool) ($this->show_projects ?? true),
+            'skills'         => (bool) ($this->show_skills ?? true),
+            'experience'     => (bool) ($this->show_experience ?? true),
+            'certifications' => (bool) ($this->show_certifications ?? true),
+            default          => false,
         };
     }
 }

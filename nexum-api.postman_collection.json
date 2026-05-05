@@ -77,6 +77,210 @@
             },
             "description": "Visualización pública de un portafolio individual. Respeta la configuración de privacidad del usuario. Si el perfil es privado, devuelve 404. No requiere autenticación.\n\n**PREREQUISITO:** Ejecutar primero 'Get Portfolio ID' para obtener un {{portfolio_id}} válido.\n\n**Casos de prueba:**\n1. Perfil público con todas las secciones visibles (default)\n2. Perfil público con secciones ocultas (modificar en PUT /portfolio)\n3. Perfil privado (global_privacy: 'private') → debe devolver 404\n\n**Body:** No requiere body (GET request)"
           }
+        },
+        {
+          "name": "HU9 — Perfil publico completo (todo visible)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('Tiene id y datos basicos', () => {",
+                  "    pm.expect(r).to.have.property('id');",
+                  "    pm.expect(r).to.have.property('profession');",
+                  "    pm.expect(r.user).to.have.property('first_name');",
+                  "    pm.expect(r.user).to.not.have.property('email');",
+                  "});",
+                  "pm.test('Incluye las 4 secciones', () => {",
+                  "    pm.expect(r).to.have.property('projects');",
+                  "    pm.expect(r).to.have.property('skills');",
+                  "    pm.expect(r).to.have.property('certifications');",
+                  "    pm.expect(r).to.have.property('work_experiences');",
+                  "});",
+                  "pm.test('No expone campos de privacidad', () => {",
+                  "    pm.expect(r).to.not.have.property('global_privacy');",
+                  "    pm.expect(r).to.not.have.property('show_projects');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolios/{{portfolio_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portfolios",
+                "{{portfolio_id}}"
+              ]
+            },
+            "description": "PREREQUISITO: Ejecutar primero Login (Profesional) y Get Portfolio ID.\n\nSin token — simula visitante anonimo.\n\nEsperado: 200 con las 4 secciones (projects, skills, certifications, work_experiences).\n\nVerificar:\n- No incluye email del user\n- No incluye global_privacy ni show_*"
+          }
+        },
+        {
+          "name": "HU9 — Configurar y verificar privacidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "console.log('Perfil puesto en privado. Ahora ejecutar los dos siguientes.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portfolio"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Ana\",\n  \"last_name\": \"García\",\n  \"global_privacy\": \"private\",\n  \"show_skills\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "El dueno pone su perfil en privado.\nDespues ejecutar los dos siguientes."
+          }
+        },
+        {
+          "name": "HU9 — Perfil privado devuelve 404 ",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "const r = pm.response.json();",
+                  "pm.test('Mensaje correcto', () => {",
+                  "    pm.expect(r.message).to.equal('Portfolio not found.');",
+                  "});",
+                  "console.log('Correcto: perfil privado no expuesto al visitante');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolios/{{portfolio_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portfolios",
+                "{{portfolio_id}}"
+              ]
+            },
+            "description": "PREREQUISITO: Ejecutar primero HU9 — Configurar perfil privado.\n\nSin token — simula visitante externo.\n\nEsperado: 404 con mensaje 'Portfolio not found.'"
+          }
+        },
+        {
+          "name": "HU9 — Restaurar perfil a publico (cleanup)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 — perfil restaurado', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('global_privacy es public', () => {",
+                  "    pm.expect(r.global_privacy).to.equal('public');",
+                  "});",
+                  "console.log('Perfil restaurado. Pruebas HU9 completadas.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portfolio"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Ana\",\n  \"last_name\": \"García\",\n  \"global_privacy\": \"public\",\n  \"show_projects\": true,\n  \"show_skills\": true,\n  \"show_experience\": true,\n  \"show_certifications\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Restaura el perfil a publico con todas las secciones visibles.\nEjecutar siempre al final de las pruebas HU9."
+          }
         }
       ]
     },
