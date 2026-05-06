@@ -19,6 +19,8 @@ use App\Http\Controllers\Api\V1\SkillSuggestionController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\ThemeController;
+use App\Http\Controllers\Api\V1\PortfolioThemeController;
 
 Route::prefix('v1')->group(function () {
 
@@ -30,6 +32,9 @@ Route::prefix('v1')->group(function () {
 
     // Public: visualización de portafolios individuales
     Route::get('/portfolios/{portfolio}', [PublicPortfolioController::class, 'show']);
+
+    // HU3(sp 3): Temas disponibles (público)
+    Route::get('/themes', [ThemeController::class, 'index']);
 
     Route::prefix('auth')->group(function () {
 
@@ -91,6 +96,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/', [PortfolioController::class, 'show']);
         Route::put('/', [PortfolioController::class, 'update']);
         Route::post('/avatar', [PortfolioController::class, 'updateAvatar']);
+        // HU3(sp 3): Actualizar tema del portfolio
+        Route::patch('/theme', [PortfolioThemeController::class, 'update']);
 
         // HU-4: Habilidades del portfolio
         Route::prefix('skills')->group(function () {

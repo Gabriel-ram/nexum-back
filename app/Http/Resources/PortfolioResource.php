@@ -25,6 +25,7 @@ class PortfolioResource extends JsonResource
             'linkedin_url' => $this->linkedin_url,
             'github_url'   => $this->github_url,
             'design_pattern'  => $this->design_pattern,
+            'theme'           => \App\Enums\PortfolioTheme::tryFrom($this->design_pattern)?->metadata(),
             'global_privacy'  => $this->global_privacy,
             'show_projects'     => $this->show_projects,
             'show_skills'       => $this->show_skills,

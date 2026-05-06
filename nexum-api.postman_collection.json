@@ -1457,6 +1457,92 @@
           }
         }
       ]
+    },
+  {
+    "name": "HU3 - Temas de Portfolio",
+    "description": "Endpoints para personalización del diseño del portafolio.\n\nFLUJO DE PRUEBA:\n1. GET /themes             → ver los 2 temas disponibles (sin token)\n2. Login profesional       → obtener {{token}}\n3. Get Portfolio ID        → obtener {{portfolio_id}}\n4. PATCH /portfolio/theme  → cambiar el tema (con token)\n5. GET /portfolios/{{portfolio_id}} → verificar que el tema se refleja en la vista pública",
+    "item": [
+      {
+        "name": "Listar Temas Disponibles",
+        "request": {
+          "method": "GET",
+          "header": [
+            { "key": "Accept", "value": "application/json" }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/v1/themes",
+            "host": ["{{base_url}}"],
+            "path": ["api", "v1", "themes"]
+          },
+          "description": "Devuelve los 2 temas predefinidos disponibles para el portfolio.\n\nEndpoint público — no requiere autenticación.\n\nRespuesta esperada:\n{\n  \"data\": [\n    { \"id\": \"light_mode\", \"name\": \"Modo Claro\", \"description\": \"...\", \"palette\": null },\n    { \"id\": \"dark_mode\",  \"name\": \"Modo Oscuro\", \"description\": \"...\", \"palette\": null }\n  ]\n}"
+        }
+      },
+      {
+        "name": "Actualizar Tema del Portfolio",
+        "request": {
+          "method": "PATCH",
+          "header": [
+            { "key": "Content-Type",  "value": "application/json" },
+            { "key": "Accept",        "value": "application/json" },
+            { "key": "Authorization", "value": "Bearer {{token}}" }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/v1/portfolio/theme",
+            "host": ["{{base_url}}"],
+            "path": ["api", "v1", "portfolio", "theme"]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"design_pattern\": \"dark_mode\"\n}",
+            "options": { "raw": { "language": "json" } }
+          },
+          "description": "Actualiza el tema visual del portfolio del usuario autenticado.\n\nRequiere: Bearer {{token}} de un usuario con rol 'professional'.\nPREREQUISITO: Ejecutar Login para obtener {{token}}.\n\nValores válidos para design_pattern:\n- \"light_mode\" → Modo Claro\n- \"dark_mode\"  → Modo Oscuro\n\nRespuesta 200:\n{\n  \"message\": \"Tema actualizado correctamente.\",\n  \"data\": {\n    \"design_pattern\": \"dark_mode\",\n    \"theme\": {\n      \"id\": \"dark_mode\",\n      \"name\": \"Modo Oscuro\",\n      \"description\": \"...\",\n      \"palette\": null\n    }\n  }\n}\n\nErrores:\n- 401 sin token\n- 422 si design_pattern es inválido o está vacío\n- 404 si el usuario no tiene portfolio creado"
+        }
+      },
+      {
+        "name": "Actualizar Tema - Valor Inválido (422)",
+        "request": {
+          "method": "PATCH",
+          "header": [
+            { "key": "Content-Type",  "value": "application/json" },
+            { "key": "Accept",        "value": "application/json" },
+            { "key": "Authorization", "value": "Bearer {{token}}" }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/v1/portfolio/theme",
+            "host": ["{{base_url}}"],
+            "path": ["api", "v1", "portfolio", "theme"]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"design_pattern\": \"tema_inexistente\"\n}",
+            "options": { "raw": { "language": "json" } }
+          },
+          "description": "Prueba negativa: enviar un tema que no existe.\nEsperamos respuesta 422 con error de validación en 'design_pattern'."
+        }
+      },
+      {
+        "name": "Actualizar Tema - Sin Token (401)",
+        "request": {
+          "method": "PATCH",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" },
+            { "key": "Accept",       "value": "application/json" }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/v1/portfolio/theme",
+            "host": ["{{base_url}}"],
+            "path": ["api", "v1", "portfolio", "theme"]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"design_pattern\": \"dark_mode\"\n}",
+            "options": { "raw": { "language": "json" } }
+          },
+          "description": "Prueba negativa: intentar actualizar el tema sin autenticación.\nEsperamos respuesta 401 Unauthorized."
+        }
+      }
+    ]
     }
   ]
 }
