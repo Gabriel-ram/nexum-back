@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\SkillController;
 use App\Http\Controllers\Api\V1\SkillSuggestionController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\ProfileVisitController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\ThemeController;
 use App\Http\Controllers\Api\V1\PortfolioThemeController;
@@ -34,6 +35,13 @@ Route::prefix('v1')->group(function () {
 
     // Public: visualización de portafolios individuales
     Route::get('/portfolios/{portfolio}', [PublicPortfolioController::class, 'show']);
+
+    // Public: gestión de visitas de perfiles
+    Route::prefix('profile/{profileId}')->group(function () {
+        Route::post('/visit', [ProfileVisitController::class, 'visit']);
+        Route::get('/stats', [ProfileVisitController::class, 'stats']);
+        Route::get('/visitors', [ProfileVisitController::class, 'visitors']);
+    });
 
     // HU3(sp 3): Temas disponibles (público)
     Route::get('/themes', [ThemeController::class, 'index']);

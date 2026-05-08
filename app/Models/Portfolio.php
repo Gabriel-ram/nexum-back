@@ -60,6 +60,11 @@ class Portfolio extends Model
         return $this->hasMany(PortfolioSkill::class)->active();
     }
 
+    public function visits(): HasMany
+    {
+        return $this->hasMany(ProfileVisit::class);
+    }
+
     protected function casts(): array
     {
         return [

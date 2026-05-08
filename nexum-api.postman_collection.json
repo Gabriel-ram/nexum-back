@@ -1588,9 +1588,9 @@
         }
       ]
     },
-  {
-    "name": "HU3 - Temas de Portfolio",
-    "description": "Endpoints para personalización del diseño del portafolio.\n\nFLUJO DE PRUEBA:\n1. GET /themes             → ver los 2 temas disponibles (sin token)\n2. Login profesional       → obtener {{token}}\n3. Get Portfolio ID        → obtener {{portfolio_id}}\n4. PATCH /portfolio/theme  → cambiar el tema (con token)\n5. GET /portfolios/{{portfolio_id}} → verificar que el tema se refleja en la vista pública",
+    {
+      "name": "HU3 - Temas de Portfolio",
+      "description": "Endpoints para personalización del diseño del portafolio.\n\nFLUJO DE PRUEBA:\n1. GET /themes             → ver los 2 temas disponibles (sin token)\n2. Login profesional       → obtener {{token}}\n3. Get Portfolio ID        → obtener {{portfolio_id}}\n4. PATCH /portfolio/theme  → cambiar el tema (con token)\n5. GET /portfolios/{{portfolio_id}} → verificar que el tema se refleja en la vista pública",
     "item": [
       {
         "name": "Listar Temas Disponibles",
@@ -1669,10 +1669,69 @@
             "raw": "{\n  \"design_pattern\": \"dark_mode\"\n}",
             "options": { "raw": { "language": "json" } }
           },
-          "description": "Prueba negativa: intentar actualizar el tema sin autenticación.\nEsperamos respuesta 401 Unauthorized."
+          "description": "Cambia el tema del portfolio del usuario autenticado.\n\n- design_pattern: 'light_mode' | 'dark_mode'\n\nRequiere Bearer {{token}}. El tema se refleja en la vista pública del portfolio."
+          }
         }
-      }
-    ]
+      ]
+    },
+    {
+      "name": "Visitas de Perfiles",
+      "description": "Gestión de visitas a perfiles. Registra visitantes y muestra estadísticas. Los admins y dueños no cuentan.",
+      "item": [
+        {
+          "name": "Registrar Visita",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/profile/{{portfolio_id}}/visit",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","profile","{{portfolio_id}}","visit"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Registra una visita a un perfil. No requiere body.\n\n**Respuestas esperadas:**\n- 201: Visita registrada exitosamente\n- 200: Dueño detectado (no contada)\n- 200: Admin detectado (no contada)\n- 200: IP duplicada (misma IP en 2 horas)\n\n**Importante:**\n- Si el visitante está autenticado, se registra su user_id\n- Si es anónimo, se registra IP (pero no se expone al front)\n- El contador views_count del portfolio se incrementa automáticamente"
+          }
+        },
+        {
+          "name": "Estadísticas del Perfil",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/profile/{{portfolio_id}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","profile","{{portfolio_id}}","stats"]
+            },
+            "description": "Obtiene estadísticas del perfil: contador total + últimos 5 visitantes.\n\n**Response 200:**\n{\n  \"visits_count\": 142,\n  \"recent_visitors\": [\n    { \"user_id\": 1, \"name\": \"Juan Pérez\", \"visited_at\": \"2026-05-08T10:00:00\" },\n    { \"user_id\": 2, \"name\": \"Ana López\", \"visited_at\": \"2026-05-07T18:30:00\" },\n    { \"user_id\": null, \"name\": \"Visitante anónimo\", \"visited_at\": \"2026-05-07T15:45:00\" }\n  ]\n}\n\n**Nota:** Los admins y el dueño del perfil no aparecen en la lista de visitantes."
+          }
+        },
+        {
+          "name": "Lista Completa de Visitantes",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/profile/{{portfolio_id}}/visitors?per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","profile","{{portfolio_id}}","visitors"],
+              "query": [
+                { "key": "per_page", "value": "20", "description": "Items por página (máx 100)" }
+              ]
+            },
+            "description": "Lista completa de visitantes paginada. Incluye todos excepto admins y dueño del perfil.\n\n**Response 200:**\n{\n  \"data\": [\n    { \"id\": 1, \"user_id\": 3, \"name\": \"Ana López\", \"visited_at\": \"2026-05-08T10:00:00\" },\n    { \"id\": 2, \"user_id\": null, \"name\": \"Visitante anónimo\", \"visited_at\": \"2026-05-08T09:45:00\" }\n  ],\n  \"meta\": {\n    \"current_page\": 1,\n    \"last_page\": 1,\n    \"per_page\": 20,\n    \"total\": 2\n  }\n}\n\n**Importante:** La IP nunca se expone al frontend, solo se muestra \"Visitante anónimo\"."
+          }
+        }
+      ]
     }
   ]
 }
