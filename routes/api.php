@@ -21,6 +21,8 @@ use App\Http\Controllers\Api\V1\ProjectController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\ThemeController;
 use App\Http\Controllers\Api\V1\PortfolioThemeController;
+use App\Http\Controllers\Api\V1\Admin\AdminDashboardController;
+use App\Http\Controllers\Api\V1\Admin\AdminBackupController;
 
 Route::prefix('v1')->group(function () {
 
@@ -89,6 +91,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/project-categories', [AdminProjectCategoryController::class, 'index']);
         Route::patch('/project-categories/{category}', [AdminProjectCategoryController::class, 'update']);
         Route::patch('/project-categories/{category}/toggle-status', [AdminProjectCategoryController::class, 'toggleStatus']);
+
+        //Backups y dashboard backup
+        Route::get('/dashboard', [AdminDashboardController::class, 'index']);
+        Route::post('/backup',   [AdminBackupController::class,   'generate']);
     });
 
     // HU-7 + HU-8: Portfolio del usuario autenticado

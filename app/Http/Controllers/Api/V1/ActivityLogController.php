@@ -24,7 +24,7 @@ class ActivityLogController extends Controller
 
         if ($request->filled('user_id')) {
             $query->where('causer_type', 'App\Models\User')
-                  ->where('causer_id', $request->user_id);
+                    ->where('causer_id', $request->user_id);
         }
 
         $perPage = $request->input('per_page', 20);

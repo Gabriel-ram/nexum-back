@@ -1089,7 +1089,137 @@
               ]
             }
           }
+        },
+        {
+          "name": "Admin Dashboard",
+          "event": [
+          {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('Tiene estructura correcta', () => {",
+                  "    pm.expect(r.data).to.have.property('users');",
+                  "    pm.expect(r.data.users).to.have.property('total');",
+                  "    pm.expect(r.data.users).to.have.property('active');",
+                  "    pm.expect(r.data.users).to.have.property('inactive');",
+                  "    pm.expect(r.data).to.have.property('portfolios');",
+                  "    pm.expect(r.data).to.have.property('activity');",
+                  "});"
+                ]
+              }
+            }
+          ],
+            "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "dashboard"]
+            },
+            "description": "Devuelve métricas clave del sistema: conteo de usuarios (total, activos, inactivos), portfolios y actividad reciente.\n\nRequiere: Bearer {{admin_token}}\nPREREQUISITO: Ejecutar Login Admin para obtener {{admin_token}}.\n\nRespuesta 200:\n{\n  \"data\": {\n    \"users\": { \"total\": 4, \"active\": 3, \"inactive\": 1 },\n    \"portfolios\": 3,\n    \"activity\": { \"total_actions\": 10, \"recent\": [...] }\n  }\n}\n\nErrores:\n- 401 sin token\n- 403 sin rol admin"
+            }
+        },
+        {
+          "name": "Admin Dashboard — Sin Token (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "dashboard"]
+            },
+            "description": "Prueba negativa: acceder al dashboard sin token. Esperamos 401 Unauthorized."
+          }
+        },
+        {
+          "name": "Admin Dashboard — Sin Rol Admin (403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "dashboard"]
+            },
+          "description": "Prueba negativa: acceder al dashboard con token de usuario profesional. Esperamos 403 Forbidden."
         }
+      },
+      {
+        "name": "Generar Backup SQL",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Respuesta es un archivo descargable', () => {",
+                "    const disposition = pm.response.headers.get('Content-Disposition');",
+                "    pm.expect(disposition).to.include('attachment');",
+                "    pm.expect(disposition).to.include('.sql');",
+                "});"
+              ]
+            }
+          }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",        "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/backup",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "backup"]
+            },
+            "description": "Genera una copia de seguridad de la base de datos en formato SQL y la devuelve como descarga directa.\n\nNo requiere body.\nRequiere: Bearer {{admin_token}}\nPREREQUISITO: Ejecutar Login Admin para obtener {{admin_token}}.\n\nRespuesta 200: archivo .sql descargable\nEl archivo se genera con pg_dump si está disponible, o con PHP puro como fallback.\nEl evento queda registrado en activity_log.\n\nErrores:\n- 401 sin token\n- 403 sin rol admin\n- 500 si falla la generación del backup"
+          }
+        },
+        {
+        "name": "Generar Backup — Sin Token (401)",
+        "request": {
+          "method": "POST",
+          "header": [
+            { "key": "Accept", "value": "application/json" }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/v1/admin/backup",
+            "host": ["{{base_url}}"],
+            "path": ["api", "v1", "admin", "backup"]
+          },
+        "description": "Prueba negativa: intentar generar backup sin token. Esperamos 401 Unauthorized."
+        }
+      },
+      {
+      "name": "Generar Backup — Sin Rol Admin (403)",
+      "request": {
+      "method": "POST",
+        "header": [
+          { "key": "Accept",        "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/admin/backup",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "admin", "backup"]
+        },
+        "description": "Prueba negativa: intentar generar backup con token de usuario profesional. Esperamos 403 Forbidden."
+        }
+      }
       ]
     },
     {
