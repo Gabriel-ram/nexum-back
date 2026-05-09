@@ -108,6 +108,7 @@ Route::prefix('v1')->group(function () {
     // HU-7 + HU-8: Portfolio del usuario autenticado
     Route::prefix('portfolio')->middleware('auth:sanctum')->group(function () {
         Route::get('/', [PortfolioController::class, 'show']);
+        Route::get('/export', [PortfolioController::class, 'export']);
         Route::put('/', [PortfolioController::class, 'update']);
         Route::post('/avatar', [PortfolioController::class, 'updateAvatar']);
         // HU3(sp 3): Actualizar tema del portfolio

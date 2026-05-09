@@ -34,6 +34,7 @@ class PublicPortfolioController extends Controller
                 'id' => $portfolio->user->id,
                 'first_name' => $portfolio->user->first_name,
                 'last_name' => $portfolio->user->last_name,
+                'email' => $portfolio->user->email,
             ],
             'profession' => $portfolio->profession,
             'biography' => $portfolio->biography,
