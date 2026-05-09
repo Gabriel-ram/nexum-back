@@ -30,6 +30,9 @@ Route::prefix('v1')->group(function () {
     // Public: featured profiles for landing page
     Route::get('/featured-profiles', [FeaturedProfilesController::class, 'index']);
 
+    // Public: búsqueda de profesionales (soporta tokens opcionales)
+    Route::get('/search/professionals', [\App\Http\Controllers\Api\V1\SearchController::class, 'professionals']);
+
     // Public: categorías de proyecto (para el selector del modal de creación de proyectos)
     Route::get('/project-categories', [ProjectCategoryController::class, 'index']);
 
