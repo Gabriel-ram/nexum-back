@@ -46,6 +46,10 @@ class SearchController extends Controller
                   // Búsqueda por habilidades o especialidades (ej: React, Node.js)
                   ->orWhereHas('skills.skill', function ($skillQuery) use ($searchTerm) {
                       $skillQuery->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"]);
+                  })
+                  // Búsqueda en los proyectos (si usaron React en algún proyecto, también son desarrolladores React)
+                  ->orWhereHas('projects.skills', function ($projectSkillQuery) use ($searchTerm) {
+                      $projectSkillQuery->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"]);
                   });
             });
         }
@@ -53,9 +57,12 @@ class SearchController extends Controller
         // Filtro opcional específico por array de skills (por ids o nombres)
         if ($request->filled('skills') && is_array($request->input('skills'))) {
             $skills = $request->input('skills');
-            $query->whereHas('skills.skill', function ($skillQuery) use ($skills) {
-                // Asumimos que puede ser nombre de skill, si son IDs se cambiaría a whereIn('id', $skills)
-                $skillQuery->whereIn('name', $skills); 
+            $query->where(function($q) use ($skills) {
+                $q->whereHas('skills.skill', function ($skillQuery) use ($skills) {
+                    $skillQuery->whereIn('name', $skills); 
+                })->orWhereHas('projects.skills', function ($projectSkillQuery) use ($skills) {
+                    $projectSkillQuery->whereIn('name', $skills);
+                });
             });
         }
         
