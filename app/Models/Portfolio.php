@@ -65,6 +65,14 @@ class Portfolio extends Model
         return $this->hasMany(ProfileVisit::class);
     }
 
+    /**
+     * Relación con los enlaces adicionales
+     */
+    public function additionalLinks(): HasMany
+    {
+        return $this->hasMany(PortfolioLink::class);
+    }
+
     protected function casts(): array
     {
         return [

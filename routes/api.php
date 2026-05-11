@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\V1\SkillSuggestionController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\ProfileVisitController;
+use App\Http\Controllers\Api\V1\PortfolioLinkController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\ThemeController;
 use App\Http\Controllers\Api\V1\PortfolioThemeController;
@@ -113,6 +114,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/avatar', [PortfolioController::class, 'updateAvatar']);
         // HU3(sp 3): Actualizar tema del portfolio
         Route::patch('/theme', [PortfolioThemeController::class, 'update']);
+
+        // HU-9: Enlaces adicionales del portfolio
+        Route::prefix('links')->group(function () {
+            Route::get('/', [PortfolioLinkController::class, 'index']);
+            Route::post('/', [PortfolioLinkController::class, 'store']);
+            Route::delete('/{id}', [PortfolioLinkController::class, 'destroy']);
+        });
 
         // HU-4: Habilidades del portfolio
         Route::prefix('skills')->group(function () {
