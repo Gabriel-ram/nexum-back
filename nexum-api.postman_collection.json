@@ -1765,6 +1765,67 @@
           }
         }
       ]
+    },
+    {
+      "name": "Enlaces Adicionales del Portfolio",
+      "description": "Gestión de enlaces adicionales para el portfolio. Detecta automáticamente la plataforma del URL.",
+      "item": [
+        {
+          "name": "Listar Enlaces Adicionales",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/links",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","portfolio","links"]
+            },
+            "description": "Lista todos los enlaces adicionales del usuario autenticado.\n\n**Response 200:**\n{\n  \"data\": [\n    { \"id\": 1, \"url\": \"https://kaggle.com/anagarcia\", \"platform\": \"kaggle\" },\n    { \"id\": 2, \"url\": \"https://github.com/anagarcia\", \"platform\": \"github\" }\n  ]\n}\n\nRequiere Bearer {{token}}."
+          }
+        },
+        {
+          "name": "Agregar Nuevo Enlace",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/links",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","portfolio","links"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://github.com/username\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Agrega un nuevo enlace adicional al portfolio. El sistema detecta automáticamente la plataforma.\n\n**Request:**\n{\n  \"url\": \"https://github.com/username\" (requerido, max 255 chars)\n}\n\n**Response 201:**\n{\n  \"data\": {\n    \"id\": 3,\n    \"url\": \"https://github.com/username\",\n    \"platform\": \"github\",\n    \"created_at\": \"2026-05-11T16:30:00.000Z\"\n  }\n}\n\n**Errores:**\n- 422: URL inválida o supera 255 caracteres\n- 422: Máximo 10 enlaces permitidos\n- 404: Portfolio no encontrado"
+          }
+        },
+        {
+          "name": "Eliminar Enlace",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/portfolio/links/{{link_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","portfolio","links","{{link_id}}"],
+              "variable": [{ "key": "link_id", "value": "1" }]
+            },
+            "description": "Elimina un enlace adicional del portfolio del usuario autenticado.\n\n**Response 200:**\n{\n  \"message\": \"Link deleted successfully\"\n}\n\n**Errores:**\n- 404: Enlace no encontrado\n- 404: Portfolio no encontrado\n- 403: El enlace no pertenece al usuario autenticado"
+          }
+        }
+      ]
     }
   ]
 }

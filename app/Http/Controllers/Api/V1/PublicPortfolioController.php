@@ -81,6 +81,13 @@ class PublicPortfolioController extends Controller
             $response['work_experiences'] = WorkExperienceResource::collection($experiences);
         }
 
+        // Agregar enlaces adicionales
+        $additionalLinks = $portfolio->additionalLinks()
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'url', 'platform', 'created_at']);
+
+        $response['additional_links'] = $additionalLinks;
+
         return response()->json($response);
     }
 }

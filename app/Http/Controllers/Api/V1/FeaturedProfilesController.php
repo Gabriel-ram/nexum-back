@@ -30,7 +30,7 @@ class FeaturedProfilesController extends Controller
             }
 
             return [
-                'id'             => $portfolio->id,
+                'id'             => $portfolio?->id,
                 'first_name'     => $user->first_name,
                 'last_name'      => $user->last_name,
                 'location'       => $portfolio?->location,
