@@ -73,6 +73,9 @@ Route::prefix('v1')->group(function () {
             ->middleware('throttle:6,1');
 
         Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+        
+        Route::patch('/update-locale', [AuthController::class, 'updateLocale'])
+            ->middleware('auth:sanctum');
 
     });
 
