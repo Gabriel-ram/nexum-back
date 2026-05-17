@@ -43,23 +43,25 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function verifyEmail(Request $request, int $id, string $hash): JsonResponse
-    {
-        $user = User::findOrFail($id);
+    public function verifyEmail(Request $request, int $id, string $hash)
+{
+    $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
 
-        if (! hash_equals($hash, sha1($user->getEmailForVerification()))) {
-            return response()->json(['message' => 'Invalid verification link.'], 403);
-        }
+    $user = User::findOrFail($id);
 
-        if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified.'], 200);
-        }
-
-        $user->markEmailAsVerified();
-        event(new Verified($user));
-
-        return response()->json(['message' => 'Email verified successfully.'], 200);
+    if (! hash_equals($hash, sha1($user->getEmailForVerification()))) {
+        return redirect($frontendUrl . '/email-verified?status=error');
     }
+
+    if ($user->hasVerifiedEmail()) {
+        return redirect($frontendUrl . '/email-verified?status=already-verified');
+    }
+
+    $user->markEmailAsVerified();
+    event(new Verified($user));
+
+    return redirect($frontendUrl . '/email-verified?status=success');
+}
 
     public function resendVerification(Request $request): JsonResponse
     {
