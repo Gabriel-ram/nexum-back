@@ -19,8 +19,8 @@ class SkillSuggestionResource extends JsonResource
             'is_active'     => true,
             'status'        => $this->status,
             'justification' => $this->justification,
-            'created_at'    => $this->created_at->toISOString(),
-            'updated_at'    => $this->updated_at->toISOString(),
+            'created_at'    => $this->created_at->toIso8601String(),
+            'updated_at'    => $this->updated_at->toIso8601String(),
         ];
     }
 }

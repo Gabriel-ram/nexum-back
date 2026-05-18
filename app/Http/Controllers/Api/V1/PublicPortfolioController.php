@@ -47,8 +47,8 @@ class PublicPortfolioController extends Controller
             'github_url' => $portfolio->github_url,
             'design_pattern' => $portfolio->design_pattern,
             'views_count' => $portfolio->views_count,
-            'created_at' => $portfolio->created_at->toISOString(),
-            'updated_at' => $portfolio->updated_at->toISOString(),
+            'created_at' => $portfolio->created_at->toIso8601String(),
+            'updated_at' => $portfolio->updated_at->toIso8601String(),
         ];
 
         // Agregar secciones según configuración de privacidad

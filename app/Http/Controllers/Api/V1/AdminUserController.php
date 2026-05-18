@@ -30,7 +30,7 @@ class AdminUserController extends Controller
                 'email'      => $user->email,
                 'role'       => $user->roles->first()?->name,
                 'is_active'  => $user->is_active,
-                'created_at' => $user->created_at->toISOString(),
+                'created_at' => $user->created_at->toIso8601String(),
                 'portfolio'  => $user->portfolio
                     ? ['global_privacy' => $user->portfolio->global_privacy]
                     : null,

@@ -92,7 +92,7 @@ class ProfileVisitController extends Controller
                     'name' => $visit->user_id 
                         ? ($visit->user->first_name . ' ' . $visit->user->last_name)
                         : 'Visitante anónimo',
-                    'visited_at' => $visit->visited_at->toISOString(),
+                    'visited_at' => $visit->visited_at->toIso8601String(),
                 ];
             });
 
@@ -129,7 +129,7 @@ class ProfileVisitController extends Controller
                 'name' => $visit->user_id 
                     ? ($visit->user->first_name . ' ' . $visit->user->last_name)
                     : 'Visitante anónimo',
-                'visited_at' => $visit->visited_at->toISOString(),
+                'visited_at' => $visit->visited_at->toIso8601String(),
             ];
         });
 

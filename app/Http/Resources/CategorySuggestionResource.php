@@ -15,7 +15,7 @@ class CategorySuggestionResource extends JsonResource
             'name'          => $this->name,
             'justification' => $this->justification,
             'status'        => $this->status,
-            'created_at'    => $this->created_at->toISOString(),
+            'created_at'    => $this->created_at->toIso8601String(),
         ];
     }
 }

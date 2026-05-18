@@ -18,8 +18,8 @@ class CertificationResource extends JsonResource
             'expiration_date' => $this->expiration_date?->format('m/Y'),
             'image_url'       => $this->image_url,
             'is_active'       => $this->is_active,
-            'created_at'      => $this->created_at->toISOString(),
-            'updated_at'      => $this->updated_at->toISOString(),
+            'created_at'      => $this->created_at->toIso8601String(),
+            'updated_at'      => $this->updated_at->toIso8601String(),
         ];
     }
 }

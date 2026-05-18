@@ -32,8 +32,8 @@ class PortfolioResource extends JsonResource
             'show_experience'   => $this->show_experience,
             'show_certifications' => $this->show_certifications,
             'views_count'     => $this->views_count,
-            'created_at'   => $this->created_at->toISOString(),
-            'updated_at'   => $this->updated_at->toISOString(),
+            'created_at'   => $this->created_at->toIso8601String(),
+            'updated_at'   => $this->updated_at->toIso8601String(),
         ];
     }
 }
