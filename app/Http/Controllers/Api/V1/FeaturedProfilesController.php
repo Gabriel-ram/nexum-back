@@ -10,31 +10,36 @@ use Illuminate\Http\JsonResponse;
 
 class FeaturedProfilesController extends Controller
 {
-    private const FEATURED_EMAILS = [
-        'ana.garcia@portfolio.test',
-        'carlos.mendez@portfolio.test',
-        'sofia.romero@portfolio.test',
-    ];
-
     public function index(): JsonResponse
     {
-        $users = User::with(['portfolio' => fn ($q) => $q->withCount('projects')])
-            ->whereIn('email', self::FEATURED_EMAILS)
+        $users = User::role('professional')
+            ->whereHas('portfolio', function ($query) {
+                $query->where('global_privacy', 'public');
+            })
+            ->with(['portfolio' => fn ($q) => $q->withCount('projects')])
+            ->latest()
+            ->take(3)
             ->get();
 
         $profiles = $users->map(function (User $user) {
             $portfolio = $user->portfolio;
 
+            // Solo incluir perfiles que sean públicos
+            if (! $portfolio || $portfolio->global_privacy === 'private') {
+                return null;
+            }
+
             return [
+                'id'             => $portfolio?->id,
                 'first_name'     => $user->first_name,
                 'last_name'      => $user->last_name,
                 'location'       => $portfolio?->location,
                 'avatar_url'     => $portfolio?->avatar_path
                     ? Cloudinary::image($portfolio->avatar_path)->toUrl()
                     : null,
-                'projects_count' => $portfolio?->projects_count ?? 0,
+                'projects_count' => $portfolio->show_projects ? ($portfolio?->projects_count ?? 0) : 0,
             ];
-        });
+        })->filter()->values();
 
         return response()->json([
             'data'  => $profiles,
